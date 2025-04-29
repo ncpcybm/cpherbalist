@@ -25,7 +25,19 @@ frappe.ui.form.on('Item', {
                                 production_item: frm.doc.name
                             });
                         });
+                    } else {
+
+                        frm.add_custom_button('Create Stock Entry', function() {
+
+                            frappe.new_doc('Stock Entry', {
+                                stock_entry_type: 'Material Receipt'
+                            });
+
+                        });
+
+
                     }
+
                 }
             });
         }
