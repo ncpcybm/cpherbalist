@@ -1,6 +1,6 @@
 
 frappe.ui.form.on('Item', {
-    refresh: function(frm) {
+    onload_post_render: function(frm) {
         // Remove existing button (if any) to avoid duplicates
         frm.remove_custom_button('Open BOM');
 
@@ -25,42 +25,12 @@ frappe.ui.form.on('Item', {
                                 production_item: frm.doc.name
                             });
                         });
-                    } 
-
-                        frm.add_custom_button('Create Stock Entry', function() {
-
-                            se = frappe.new_doc('Stock Entry', {
-                                stock_entry_type: 'Material Receipt',
-                                posting_date = frappe.utils.nowdate()
-
-                            });
-
-
-                            se.append("items", {
-                                "item_code": frm.doc.name,
-                                "qty": 1,
-                                "uom": "Nos",
-                                "s_warehouse": "Stores - CP",   
-                                "t_warehouse": "Finished Goods - CP",  
-                                "basic_rate": 1
-                            })
-
-
-                        });
-
-
-                    
-
+                    }
                 }
             });
         }
     }
 });
-
-
-
-
-
 
 frappe.ui.form.on('Work Order', {
     setup: function (frm) {
