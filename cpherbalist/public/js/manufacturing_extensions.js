@@ -25,8 +25,7 @@ frappe.ui.form.on('Item', {
                                 production_item: frm.doc.name
                             });
                         });
-                    }
-
+                    } 
 
                         frm.add_custom_button('Create Stock Entry', function() {
 
@@ -47,10 +46,10 @@ frappe.ui.form.on('Item', {
                             })
 
 
-                        
+                        });
 
 
-                    }
+                    
 
                 }
             });
