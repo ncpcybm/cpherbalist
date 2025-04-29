@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-25 09:29:39.129793",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tranfersmovements_section",
+  "auto_create_material_transfer",
+  "auto_submit_material_transfer",
+  "pos_sales_profile_expiration",
+  "column_break_qrnz",
+  "auto_submit_created_stock_entry",
+  "warehouse_section",
+  "default_warehouse",
+  "autosubmit_workorder"
+ ],
+ "fields": [
+  {
+   "fieldname": "warehouse_section",
+   "fieldtype": "Section Break",
+   "label": "Warehouse"
+  },
+  {
+   "fieldname": "default_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "default": "1",
+   "fieldname": "autosubmit_workorder",
+   "fieldtype": "Check",
+   "label": "Autosubmit Workorder"
+  },
+  {
+   "fieldname": "tranfersmovements_section",
+   "fieldtype": "Section Break",
+   "label": "Tranfers/Movements "
+  },
+  {
+   "default": "0",
+   "description": "\u2139\ufe0f <b>Automatically</b> create a <b>'Material Transfer'</b> with the associated <b>'Stock Entry' </b>request when an item is requested from another warehouse.\n",
+   "fieldname": "auto_create_material_transfer",
+   "fieldtype": "Check",
+   "label": "Auto-create Material Transfer"
+  },
+  {
+   "default": "0",
+   "description": "\u2139\ufe0f <b>Automatically</b> submit <b>'Material Transfer'</b>,<b style=\"color: red;\">without the need for any further action to approve or cancel.</b>",
+   "fieldname": "auto_submit_material_transfer",
+   "fieldtype": "Check",
+   "label": "Auto-submit Material Transfer"
+  },
+  {
+   "default": "90",
+   "description": "Enter value in <b>minutes</b>.<br> \nValue denote  the time for <b style=\"color:red;\">POS Seller Profile</b> expiration time. ",
+   "fieldname": "pos_sales_profile_expiration",
+   "fieldtype": "Int",
+   "label": "POS Sales Profile Expiration"
+  },
+  {
+   "fieldname": "column_break_qrnz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "\u2139\ufe0f <b>Automatically</b> submit <b>'Stock Entry'</b> created from the material transfer request, <b style=\"color: red;\">without the need for any further action to approve or cancel the transfer.</b>",
+   "fieldname": "auto_submit_created_stock_entry",
+   "fieldtype": "Check",
+   "label": "Auto-submit Created Stock Entry"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-04-28 11:00:23.192836",
+ "modified_by": "Administrator",
+ "module": "Cpherbalist",
+ "name": "CP Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

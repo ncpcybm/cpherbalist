@@ -1,0 +1,32 @@
+{
+ "custom_fields": [],
+ "custom_perms": [],
+ "doctype": "WooCommerce Product",
+ "links": [],
+ "property_setters": [
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2025-04-10 13:29:15.140704",
+   "default_value": null,
+   "doc_type": "WooCommerce Product",
+   "docstatus": 0,
+   "doctype_or_field": "DocType",
+   "field_name": null,
+   "idx": 0,
+   "is_system_generated": 0,
+   "modified": "2025-04-10 13:29:15.140704",
+   "modified_by": "Administrator",
+   "module": null,
+   "name": "WooCommerce Product-main-field_order",
+   "owner": "Administrator",
+   "property": "field_order",
+   "property_type": "Data",
+   "row_name": null,
+   "value": "[\"woocommerce_server\", \"column_break_xfcx\", \"woocommerce_id\", \"section_break_iyvp\", \"woocommerce_name\", \"description\", \"short_description\", \"section_break_hnrf\", \"slug\", \"woocommerce_date_created\", \"woocommerce_date_created_gmt\", \"woocommerce_date_modified\", \"woocommerce_date_modified_gmt\", \"stock_quantity\", \"column_break_xalx\", \"permalink\", \"type\", \"status\", \"featured\", \"catalog_visibility\", \"purchasable\", \"virtual\", \"downloadable\", \"parent_id\", \"title\", \"general_tab\", \"price\", \"regular_price\", \"sale_price\", \"tax_status\", \"tax_class\", \"column_break_ntmw\", \"date_on_sale_from\", \"date_on_sale_from_gmt\", \"date_on_sale_to\", \"date_on_sale_to_gmt\", \"on_sale\", \"total_sales\", \"inventory_tab\", \"sku\", \"manage_stock\", \"stock_status\", \"backorders\", \"backorders_allowed\", \"backordered\", \"sold_individually\", \"weight\", \"dimensions\", \"shipping_required\", \"shipping_taxable\", \"shipping_class\", \"shipping_class_id\", \"linked_products_tab\", \"upsell_ids\", \"cross_sell_ids\", \"related_ids\", \"attributes_tab\", \"attributes\", \"advanced_tab\", \"reviews_allowed\", \"rating_count\", \"average_rating\", \"categories\", \"tags\", \"product_image\", \"images\", \"default_attributes\", \"variations\", \"meta_data\"]"
+  }
+ ],
+ "sync_on_migrate": 1
+}
