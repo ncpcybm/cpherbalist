@@ -25,15 +25,29 @@ frappe.ui.form.on('Item', {
                                 production_item: frm.doc.name
                             });
                         });
-                    } else {
+                    }
+
 
                         frm.add_custom_button('Create Stock Entry', function() {
 
-                            frappe.new_doc('Stock Entry', {
-                                stock_entry_type: 'Material Receipt'
+                            se = frappe.new_doc('Stock Entry', {
+                                stock_entry_type: 'Material Receipt',
+                                posting_date = frappe.utils.nowdate()
+
                             });
 
-                        });
+
+                            se.append("items", {
+                                "item_code": frm.doc.name,
+                                "qty": 1,
+                                "uom": "Nos",
+                                "s_warehouse": "Stores - CP",   
+                                "t_warehouse": "Finished Goods - CP",  
+                                "basic_rate": 1
+                            })
+
+
+                        
 
 
                     }
