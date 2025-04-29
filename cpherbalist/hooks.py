@@ -24,7 +24,7 @@ app_license = "mit"
 add_to_apps_screen = [
     {
         "name": "cpherbalist",
-        "logo": " /assets/cpherbalist/img/cpherbalist-logo-black.png",
+        "logo": " http://91.107.236.18/files/cpherbalist-logo-black.png",
         "title": "POS",
         "route": "app/point-of-sale",
     }
