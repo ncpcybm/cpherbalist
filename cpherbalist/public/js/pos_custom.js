@@ -133,7 +133,6 @@ frappe.require('point-of-sale.bundle.js', function () {
 
                 var _ = this.force_close() >= 1;
 
-
                 if (_) {
                     this.raise_pos_closing_alert(cur_frm);
                 }
@@ -147,17 +146,11 @@ frappe.require('point-of-sale.bundle.js', function () {
 
                     frappe.require("https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js")
 
-                    
-
-
                 }, 0);
-
 
             });
 
-
             // cur_frm.doc.pos_profile
-
         }
 
 
@@ -175,10 +168,6 @@ frappe.require('point-of-sale.bundle.js', function () {
                 render_seller_profile()
                 removeCustomStyle()
               }, 0);
-
-
-
-
         }
 
         force_close() {

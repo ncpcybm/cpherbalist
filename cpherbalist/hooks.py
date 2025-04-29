@@ -35,7 +35,7 @@ add_to_apps_screen = [
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/cpherbalist/css/cpherbalist.css"
-app_include_js = ["/assets/cpherbalist/js/cpherbalist.js", "/assets/cpherbalist/js/utils.js", "/assets/cpherbalist/js/autoapply_coupon_on_pos.js", "/assets/cpherbalist/js/pos_custom.js","/assets/cpherbalist/js/pos_invoice_coupon.js", "/assets/cpherbalist/js/coupon_extensions.js", "/assets/cpherbalist/js/manufacturing_extensions.js"]
+app_include_js = ["/assets/cpherbalist/js/stock_entry.js", "/assets/cpherbalist/js/cpherbalist.js", "/assets/cpherbalist/js/utils.js", "/assets/cpherbalist/js/autoapply_coupon_on_pos.js", "/assets/cpherbalist/js/pos_custom.js","/assets/cpherbalist/js/pos_invoice_coupon.js", "/assets/cpherbalist/js/coupon_extensions.js", "/assets/cpherbalist/js/manufacturing_extensions.js"]
 
 # include js, css files in header of web template
 web_include_css = "/assets/cpherbalist/css/cpherbalist.css"
