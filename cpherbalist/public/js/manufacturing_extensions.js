@@ -26,6 +26,11 @@ frappe.ui.form.on('Item', {
                             });
                         });
                     }
+
+                    frm.add_custom_button('Create Stock Entry', function() { });
+
+
+
                 }
             });
         }
