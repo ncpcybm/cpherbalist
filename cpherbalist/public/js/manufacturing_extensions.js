@@ -30,17 +30,20 @@ frappe.ui.form.on('Item', {
                     frm.add_custom_button('Create Stock Entry', function() { 
 
 
-
-                        let default_source_warehouse = frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
-                        .then(value => {
-                            console.log('default_source_warehouse:', value);
-                        });
-        
-                    let default_target_warehouse = frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
-                        .then(value => {
-                            console.log('default_target_warehouse:', value);
-                        });
+                        let default_source_warehouse = undefined; 
+                        let default_target_warehouse = undefined; 
                         
+
+                        default_source_warehouse = frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
+                            .then(value => {
+                                console.log('default_source_warehouse:', value);
+                            });
+        
+                        default_target_warehouse = frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
+                            .then(value => {
+                                console.log('default_target_warehouse:', value);
+                            });
+
 
  
                         frappe.model.with_doctype('Stock Entry', function() {
@@ -50,8 +53,8 @@ frappe.ui.form.on('Item', {
                             se.items = [{
                                 item_code: frm.doc.name,
                                 qty: 1,
-                                s_warehouse: 'Factory - CP',
-                                t_warehouse: 'Finished Goods - CP',
+                                s_warehouse: default_source_warehouse ?? 'Factory - CP',
+                                t_warehouse: default_target_warehouse ?? 'Finished Goods - CP',
                                 basic_rate: 1
                             }];
                     
