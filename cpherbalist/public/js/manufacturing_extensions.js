@@ -29,12 +29,33 @@ frappe.ui.form.on('Item', {
 
                     frm.add_custom_button('Create Stock Entry', function() { 
 
-                        frappe.new_doc('Stock Entry', {
-                            stock_entry_type: "Material Transfer"
+                        // se = frappe.new_doc('Stock Entry', {
+                        //     stock_entry_type: "Material Transfer"
+                        // });
+
+                        // se.append("items", {
+                        //     "item_code": frm.doc.name,
+                        //     "qty": 1,
+                        //     "s_warehouse": "Stores - CP",   
+                        //     "t_warehouse": "Finished Goods - CP",  
+                        //     "basic_rate": 1
+                        // })
+
+                        frappe.model.with_doctype('Stock Entry', function() {
+                            let se = frappe.model.get_new_doc('Stock Entry');
+                            se.stock_entry_type = 'Material Transfer';
+                    
+                            se.items = [{
+                                item_code: frm.doc.name,
+                                qty: 1,
+                                s_warehouse: 'Stores - CP',
+                                t_warehouse: 'Finished Goods - CP',
+                                basic_rate: 1
+                            }];
+                    
+                            frappe.set_route('Form', 'Stock Entry', se.name);
                         });
-
-
-
+                        
 
                     });
 
