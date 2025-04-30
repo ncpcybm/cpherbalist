@@ -41,7 +41,7 @@ frappe.ui.form.on('Item', {
                         //     console.log('default_target_warehouse:', value);
                         // });
 
-
+ 
                         frappe.model.with_doctype('Stock Entry', function() {
                             let se = frappe.model.get_new_doc('Stock Entry');
                             se.stock_entry_type = 'Material Receipt';
@@ -49,8 +49,8 @@ frappe.ui.form.on('Item', {
                             se.items = [{
                                 item_code: frm.doc.name,
                                 qty: 1,
-                                s_warehouse: default_source_warehouse ?? 'Factory - CP',
-                                t_warehouse: default_target_warehouse ?? 'Finished Goods - CP',
+                                s_warehouse: 'Factory - CP',
+                                t_warehouse: 'Finished Goods - CP',
                                 basic_rate: 1
                             }];
                     
