@@ -127,9 +127,14 @@ frappe.ui.form.on('Work Order', {
                                 default_company = value
                                 cur_frm.set_value('company', default_company);
 
+
+
                                 console.log('default_company:', value);
                             });
 
+                            cur_frm.set_value('planned_start_date', frappe.datetime.now_datetime());
+
+                            
 
                         setTimeout(() => {
                             frm.doc.required_items.forEach(item => {
