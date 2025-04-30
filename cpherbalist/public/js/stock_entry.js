@@ -1,5 +1,5 @@
 frappe.ui.form.on('Stock Entry', {
-    onload_post_render: function(frm) {
+    onload: function(frm) {
         if (cur_frm.is_new()) {
 
 
