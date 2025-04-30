@@ -23,18 +23,11 @@ frappe.ui.form.on('Item', {
                         frm.add_custom_button('Create Work Order', function() {
 
 
-                            let default_company = undefined; 
-                            
-                            frappe.db.get_single_value('Global Defaults', 'default_company')
-                                .then(value => {
-                                    default_company = value
-                                    console.log('default_company:', value);
-                                });
+
 
                             let wo = frappe.model.get_new_doc('Work Order');
                             wo.production_item = frm.doc.name,
                             wo.qty = 1; 
-                            wo.company = default_company;
 
                             frappe.set_route('Form', 'Work Order', wo.name);
 
@@ -127,6 +120,14 @@ frappe.ui.form.on('Work Order', {
                         cur_frm.set_value('wip_warehouse', warehouse);
                         cur_frm.set_value('source_warehouse', warehouse);
 
+                        let default_company = undefined; 
+                            
+                        frappe.db.get_single_value('Global Defaults', 'default_company')
+                            .then(value => {
+                                default_company = value
+                                console.log('default_company:', value);
+                            });
+                            
 
                         setTimeout(() => {
                             frm.doc.required_items.forEach(item => {
