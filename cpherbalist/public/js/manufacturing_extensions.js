@@ -41,21 +41,32 @@ frappe.ui.form.on('Item', {
                         //     "basic_rate": 1
                         // })
 
+                        let default_source_warehouse = await frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
+                        .then(value => {
+                            console.log('default_source_warehouse:', value);
+                        });
+
+                        let default_target_warehouse = await frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
+                        .then(value => {
+                            console.log('default_target_warehouse:', value);
+                        });
+
+
                         frappe.model.with_doctype('Stock Entry', function() {
                             let se = frappe.model.get_new_doc('Stock Entry');
-                            se.stock_entry_type = 'Material Transfer';
+                            se.stock_entry_type = 'Material Receipt';
                     
                             se.items = [{
                                 item_code: frm.doc.name,
                                 qty: 1,
-                                s_warehouse: 'Stores - CP',
-                                t_warehouse: 'Finished Goods - CP',
+                                s_warehouse: default_source_warehouse ?? 'Factory - CP',
+                                t_warehouse: default_target_warehouse ?? 'Finished Goods - CP',
                                 basic_rate: 1
                             }];
                     
                             frappe.set_route('Form', 'Stock Entry', se.name);
                         });
-                        
+
 
                     });
 
