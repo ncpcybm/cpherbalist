@@ -31,15 +31,7 @@ frappe.ui.form.on('Item', {
 
 
 
-                        // let default_source_warehouse = await frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
-                        // .then(value => {
-                        //     console.log('default_source_warehouse:', value);
-                        // });
 
-                        // let default_target_warehouse = await frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
-                        // .then(value => {
-                        //     console.log('default_target_warehouse:', value);
-                        // });
 
  
                         frappe.model.with_doctype('Stock Entry', function() {
