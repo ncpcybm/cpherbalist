@@ -21,10 +21,20 @@ frappe.ui.form.on('Item', {
                     if (response.message.length > 0) {
                         // Add button if BOM exists
                         frm.add_custom_button('Create Work Order', function() {
-                            frappe.new_doc('Work Order', {
-                                production_item: frm.doc.name,
-                                qty: 1
-                            });
+
+
+
+                            let wo = frappe.model.get_new_doc('Work Order');
+                            wo.production_item = frm.doc.name,
+                            wo.qty = 1; 
+
+                            frappe.set_route('Form', 'Work Order', wo.name);
+
+
+                            // frappe.new_doc('Work Order', {
+                            //     production_item: frm.doc.name,
+                            //     qty: 1
+                            // });
                         });
                     }
 
