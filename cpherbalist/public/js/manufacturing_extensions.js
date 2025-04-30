@@ -125,9 +125,11 @@ frappe.ui.form.on('Work Order', {
                         frappe.db.get_single_value('Global Defaults', 'default_company')
                             .then(value => {
                                 default_company = value
+                                cur_frm.set_value('company', default_company);
+
                                 console.log('default_company:', value);
                             });
-                            
+
 
                         setTimeout(() => {
                             frm.doc.required_items.forEach(item => {
