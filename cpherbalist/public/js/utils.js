@@ -341,12 +341,12 @@ frappe.ui.form.on('Stock Entry', {
 
 
 
-            let default_source_warehouse = await frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
+            let default_source_warehouse = frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
                 .then(value => {
                     console.log('default_source_warehouse:', value);
                 });
 
-            let default_target_warehouse = await frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
+            let default_target_warehouse = frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
                 .then(value => {
                     console.log('default_target_warehouse:', value);
                 });
