@@ -22,7 +22,8 @@ frappe.ui.form.on('Item', {
                         // Add button if BOM exists
                         frm.add_custom_button('Create Work Order', function() {
                             frappe.new_doc('Work Order', {
-                                production_item: frm.doc.name
+                                production_item: frm.doc.name,
+                                qty: 1
                             });
                         });
                     }
