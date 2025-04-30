@@ -332,6 +332,24 @@ render_pos_action_btn = (frm) => {
 
 // ===================================================================
 
+frappe.ui.form.on('Stock Entry', {
+    onload: function(frm) {
+        if (cur_frm.is_new()) {
+
+
+            console.log('fff')
+
+        }
+
+
+    }
+
+
+
+})
+// ===================================================================
+
+
 
 function disable_copying() {
     // Disable right-click
