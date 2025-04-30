@@ -36,11 +36,13 @@ frappe.ui.form.on('Item', {
 
                         default_source_warehouse = frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
                             .then(value => {
+                                default_source_warehouse = value
                                 console.log('default_source_warehouse:', value);
                             });
         
                         default_target_warehouse = frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
                             .then(value => {
+                                default_target_warehouse = value
                                 console.log('default_target_warehouse:', value);
                             });
 
