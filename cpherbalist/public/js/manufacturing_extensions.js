@@ -105,7 +105,7 @@ frappe.ui.form.on('Work Order', {
 
 
 
-                        let warehouse = response.message.default_warehouse;
+                        let warehouse = response.message.default_target_warehouse;
 
                         console.log(response)
 
@@ -128,7 +128,7 @@ frappe.ui.form.on('Work Order', {
                         }, 500);
                     }
 
-                }
+                } 
             }).then((res) => {
 
             });
