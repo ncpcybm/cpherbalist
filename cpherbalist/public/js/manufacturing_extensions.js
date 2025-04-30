@@ -23,10 +23,12 @@ frappe.ui.form.on('Item', {
                         frm.add_custom_button('Create Work Order', function() {
 
 
+                            default_company = frappe.db.get_single_value('Global Defaults', 'default_company')
 
                             let wo = frappe.model.get_new_doc('Work Order');
                             wo.production_item = frm.doc.name,
                             wo.qty = 1; 
+                            wo.company = default_company;
 
                             frappe.set_route('Form', 'Work Order', wo.name);
 
