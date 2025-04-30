@@ -150,12 +150,7 @@ frappe.ui.form.on('Work Order', {
             });
 
 
-
-
-
-
-
-        }, 0);
+        }, 10);
 
         console.log("onload")
 
