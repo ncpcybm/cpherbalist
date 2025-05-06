@@ -12,10 +12,6 @@ window.maxRetries = 5;
 
 let styleTag;  // Reference to the dynamically added style tag
 
-
-
-
-
 function removeCustomStyle() {
     // If the style tag exists, remove it
     if (styleTag) {
@@ -59,25 +55,25 @@ function addCustomStyle() {
 
 function observeElementVisibility(element, callback, options = {}) {
     const defaultOptions = {
-      root: null,          // observes the viewport
-      rootMargin: '0px',   // margin around the root
-      threshold: 0.1,      // trigger callback when 10% of the element is visible
+        root: null,          // observes the viewport
+        rootMargin: '0px',   // margin around the root
+        threshold: 0.1,      // trigger callback when 10% of the element is visible
     };
-  
+
     const observerOptions = { ...defaultOptions, ...options };
-  
+
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          callback(entry.target); // Element is visible
-        } else {
-          callback(entry.target, false); // Element is not visible
-        }
-      });
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                callback(entry.target); // Element is visible
+            } else {
+                callback(entry.target, false); // Element is not visible
+            }
+        });
     }, observerOptions);
-  
+
     observer.observe(element); // Start observing the element
-  }
+}
 
 // ===================================================================
 
@@ -180,6 +176,23 @@ window.dialog = new frappe.ui.Dialog({
                         setItemWithCustomExpiry('seller_profile', data.user_link, window.default_expiration);
                         render_seller_profile();
 
+
+                        frappe.call({
+                            method: "cpherbalist.api.log_seller_profile", 
+                            args: {
+                                s_user: data.user_link,
+                            },
+                            callback: function(r) {
+                                if (r.message) {
+                    
+                                }
+                            },
+                            error: function(err) {
+                                console.error(err);
+                            }
+                        });
+
+
                     } else {
 
 
@@ -208,7 +221,10 @@ window.dialog = new frappe.ui.Dialog({
 
 function request_pin() {
     dialog.show();
-    render_seller_profile()
+    render_seller_profile();
+
+
+
 }
 
 const observer = new MutationObserver((entries) => {
@@ -265,6 +281,9 @@ function render_seller_profile() {
             }, { once: false })
 
 
+
+
+
             // outerSpan.onclick = function(){ 
             //     request_pin()
             // };
@@ -302,24 +321,81 @@ render_pos_action_btn = (frm) => {
 
     cur_pos.page.add_button("➕ Create Coupon", ()=> { 
         try {
-            window.location.href = '/app/coupon-code/new-coupon-code-ddd' 
+            window.open(
+                '/app/coupon-code/new-coupon-code-ddd',
+                '_blank' // <- This is what makes it open in a new window.
+            );
         } catch (error) { }
     }, { btn_class: "" })
 
+
+
+
+    cur_pos.page.add_button("🆕 New POS Order", ()=> { 
+        try {
+            window.location.href = '/app/point-of-sale' 
+        } catch (error) { }
+    }, { btn_class: "" })
+
+    cur_pos.page.add_button("🧮 Round Amount", ()=> { 
+        try {
+            function roundDownToNearestTenth(value) {
+                const rounded = Math.floor(value * 10) / 10;
+                const difference = value - rounded;
+                const percentageDifference = (difference / value) * 100;
+            
+                return {
+                    original: value.toFixed(2),
+                    rounded: rounded.toFixed(2),
+                    difference: difference.toFixed(2),
+                    percentage: percentageDifference.toFixed(2)
+                };
+            }
+
+            let input = cur_frm.doc.grand_total;
+
+            const result = roundDownToNearestTenth(input);
+            
+            console.log(`Original   : ${result.original}`);
+            console.log(`Rounded    : ${result.rounded}`);
+            console.log(`Difference : ${result.difference}`);
+            console.log(`Percentage : ${result.percentage}`);
+
+            debugger
+
+
+            cur_frm.set_value('additional_discount_percentage', parseFloat(result.percentage));
+
+        } catch (error) { }
+    }, { btn_class: "" })
+
+
+
     const value = getItemWithExpiry('seller_profile');
-    let buttonValue = 'Select Seller Profile'; 
+    let buttonValue = '👤 Select Seller Profile'; 
 
     if (value) {
         buttonValue = '🔄 Switch Seller Profile';
     } else {
-        buttonValue = 'Select Seller Profile';
+        buttonValue = '👤 Select Seller Profile';
     }
 
     cur_pos.page.add_button(buttonValue, ()=> { 
         try {
             request_pin();
+
+
+
+
+
+
+
         } catch (error) { }
     })
+
+
+
+
 
     // cur_pos.page.add_button("☑️ Accept Transfers", ()=> { 
     //     try {
@@ -335,12 +411,6 @@ render_pos_action_btn = (frm) => {
 frappe.ui.form.on('Stock Entry', {
     onload: function(frm) {
         if (cur_frm.is_new()) {
-
-
-
-
-
-
             let default_source_warehouse = frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
                 .then(value => {
                     console.log('default_source_warehouse:', value);
@@ -350,18 +420,32 @@ frappe.ui.form.on('Stock Entry', {
                 .then(value => {
                     console.log('default_target_warehouse:', value);
                 });
+        }
+    }
+})
+// ===================================================================
 
+frappe.ui.form.on('Sales Invoice', {
+    onload: function(frm) {
+
+        if (cur_frm.is_new()) {
+
+            console.log('⚙️ [Sales Invoice] ')
+
+            let default_target_warehouse = frappe.db.get_single_value('CP Settings', 'default_target_warehouse')
+                .then(value => {
+                    console.log('default_target_warehouse:', value);
+                    cur_frm.set_value('set_warehouse', value);
+
+                });
+
+            cur_frm.set_value('update_stock', 1);
         }
 
 
     }
-
-
-
 })
 // ===================================================================
-
-
 
 function disable_copying() {
     // Disable right-click

@@ -1,0 +1,25 @@
+[
+ {
+  "align": "Left",
+  "content": "<div style=\"text-align: center;\">\n<img src=\"http://192.168.10.182/assets/cpherbalist/img/cpherbalist-logo-black.png\" alt=\"Default Letter Head\" style=\"height: 70px;\">\n\n\n<table>\n<tbody>\n<tr>\n<td style=\"width: 100vh !important; height: 14vh !important;\">\n<p style=\"font-family: Arial, sans-serif; font-size: small;text-align: center;\"><strong>\n    <span dir=\"ltr\">CHRYSTALLENA POULLI HERBAL </span></strong><br>\n        <strong><span dir=\"ltr\">SKIN CARE PRODUCTS LTD.</span></strong><br>\n        <span dir=\"ltr\">Ithomis 8,</span> <span dir=\"ltr\">3077</span><br>\n        <span dir=\"ltr\">Limassol, Cyprus</span>\n        <br><span dir=\"ltr\">V.A.T No: CY10391869W</span><br>\n        <span dir=\"ltr\">Tel: +35799198019</span><br>\n        <span dir=\"ltr\">Email:hello@cpherbalist.com</span><br>\n        <span dir=\"ltr\">www.cpherbalist.com\n    </span>\n</p>\n\n</td>\n</tr>\n</tbody>\n</table>\n\n\n</div>",
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Letter Head",
+  "footer": null,
+  "footer_align": "Left",
+  "footer_image": null,
+  "footer_image_height": 0.0,
+  "footer_image_width": 0.0,
+  "footer_script": null,
+  "footer_source": "HTML",
+  "header_script": null,
+  "image": "",
+  "image_height": 0.0,
+  "image_width": 0.0,
+  "is_default": 1,
+  "letter_head_name": "Default Letter Head",
+  "modified": "2025-04-08 08:38:53.491736",
+  "name": "Default Letter Head",
+  "source": "HTML"
+ }
+]

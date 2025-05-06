@@ -88,19 +88,29 @@ def sync_wc_coupons():
                 customer = coupon['email_restrictions']
 
         create_erp_coupon_from_wc(code,id,amount,customer)
-        
-def create_erp_coupon_from_wc(s_coupon_code, s_wc_coupon_code, f_custom_amount, s_for_user):    
+
+
+@frappe.whitelist()       
+def create_erp_coupon_from_wc(s_coupon_code, s_description, s_wc_coupon_code, f_custom_amount, s_for_user, s_valid_upto):    
     """create_erp_coupon_from_wc
 
     Args:
         s_coupon_code (_type_): _description_
+        s_description (_type_): _description_
         s_wc_coupon_code (_type_): _description_
         f_custom_amount (_type_): _description_
         s_for_user (_type_): _description_
+        s_valid_upto (_type_): _description_
     """    
     
     
+    frappe.log_error(f"⚠️ [create_erp_coupon_from_wc] s_coupon_code", s_coupon_code)
+    frappe.log_error(f"⚠️ [create_erp_coupon_from_wc] s_coupon_code", s_coupon_code)
+    frappe.log_error(f"⚠️ [create_erp_coupon_from_wc] s_wc_coupon_code", s_wc_coupon_code)
+
+    frappe.log_error(f"⚠️ [create_erp_coupon_from_wc] f_custom_amount", f_custom_amount)
     frappe.log_error(f"⚠️ [create_erp_coupon_from_wc] s_for_user", s_for_user)
+    frappe.log_error(f"⚠️ [create_erp_coupon_from_wc] s_valid_upto", s_valid_upto)
 
     if not frappe.db.exists("Coupon Code", s_coupon_code):
         coupon_code = frappe.get_doc(
@@ -108,12 +118,14 @@ def create_erp_coupon_from_wc(s_coupon_code, s_wc_coupon_code, f_custom_amount, 
 				"doctype": "Coupon Code",
 				"coupon_name": s_coupon_code,
 				"coupon_code": s_coupon_code,
+                "description": s_description,
 				"maximum_use": 1,
 				"used": 0,
                 "custom_amount" : f_custom_amount,
                 "custom_woocommerce_coupon": s_wc_coupon_code,
-                "customer": s_for_user,
+                "customer": "Walkin Customer",
                 "coupon_type": "Gift Card",
+                "valid_upto": s_valid_upto
 
 			})
         coupon_code.insert()
@@ -136,6 +148,13 @@ def erp_create_coupon(s_coupon_code, s_wc_coupon_code):
 
 
 
+@frappe.whitelist()
+def wc_update_coupon(coupon_code, amount):
+    # Example logic
+    coupon = frappe.get_doc('Coupon Code', coupon_code)
+    coupon.amount = amount
+    coupon.save()
+    return {"status": "success"}
 
 @frappe.whitelist()
 def wc_create_coupon(
@@ -163,7 +182,7 @@ def wc_create_coupon(
             "code": "pos_" + s_coupon_code,
             "discount_type": s_discount_type,
             'description': 'Generated from POS - ' + s_coupon_code,
-            "amount": f_amount,
+            "coupon_amount": f_amount,
             "individual_use": b_individual_use,
             "exclude_sale_items": b_exclude_sale_items,
             "minimum_amount": str(f_minimum_amount),
@@ -176,7 +195,7 @@ def wc_create_coupon(
             "code": "pos_" + s_coupon_code,
             "discount_type": s_discount_type,
             'description': 'Generated from POS - ' + s_coupon_code,
-            "amount": f_amount,
+            "coupon_amount": f_amount,
             "individual_use": b_individual_use,
             "exclude_sale_items": b_exclude_sale_items,
             "minimum_amount": str(f_minimum_amount),

@@ -42,8 +42,6 @@ frappe.require('point-of-sale.bundle.js', function () {
             this.init_custom_components();
         }
 
-
-
         init_custom_components() {
             console.log("Custom components ItemCart");
 

@@ -34,6 +34,11 @@ window.addEventListener('popstate', onUrlChange);
 
 // --------------------------------
 
+
+
+
+
+
 frappe.require('point-of-sale.bundle.js', function () {
 
     window.opening_pos_entry = undefined;
@@ -45,6 +50,8 @@ frappe.require('point-of-sale.bundle.js', function () {
     erpnext.PointOfSale.Controller = class MyPosController extends erpnext.PointOfSale.Controller {
         constructor(wrapper) {
             super(wrapper);
+
+
 
             this.get_opening_entry().then((res) => {
 
@@ -73,6 +80,86 @@ frappe.require('point-of-sale.bundle.js', function () {
             });
 
             // cur_frm.doc.pos_profile
+        }
+
+        init_item_cart() {
+            this.cart = new erpnext.PointOfSale.ItemCart({
+                wrapper: this.$components_wrapper,
+                settings: this.settings,
+                events: {
+                    get_frm: () => this.frm,
+    
+                    cart_item_clicked: (item) => {
+                        const item_row = this.get_item_from_frm(item);
+                        this.item_details.toggle_item_details_section(item_row);
+                    },
+    
+                    numpad_event: (value, action) => this.update_item_field(value, action),
+    
+                    checkout: () => this.save_and_checkout(),
+    
+                    edit_cart: () => this.payment.edit_cart(),
+    
+                    customer_details_updated: (details) => {
+                        this.item_selector.load_items_data();
+                        this.customer_details = details;
+                        // will add/remove LP payment method
+                        this.payment.render_loyalty_points_payment_mode();
+
+
+                        function deleteCookie(name, path = "/") {
+                            document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
+                        }
+
+                        function setCookie(name, value, days = 7, path = "/") {
+                            deleteCookie(name);
+
+
+                            const d = new Date();
+                            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                            const expires = "expires=" + d.toUTCString();
+                            document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)};${expires};path=${path}`;
+                        }
+
+                        setCookie("pos_customer", details.customer, 15);
+                        setCookie("pos_profile", cur_pos.pos_profile, 15);
+
+
+
+                    },
+                },
+            });
+        }
+
+        update_totals_section(doc) {
+            if (!doc) doc = this.events.get_frm().doc;
+            const paid_amount = doc.paid_amount;
+            const grand_total = cint(frappe.sys_defaults.disable_rounded_total)
+                ? doc.grand_total
+                : doc.rounded_total;
+            const remaining = grand_total - doc.paid_amount;
+            const change = doc.change_amount || remaining <= 0 ? -1 * remaining : undefined;
+            const currency = doc.currency;
+            const label = __("Change Amount");
+    
+            this.$totals.html(
+                `<div class="col">
+                    <div class="total-label">${__("Grand Total")}</div>
+                    <div class="value">${format_currency(grand_total, currency)}</div>
+                </div>
+                <div class="seperator-y"></div>
+                <div class="col">
+                    <div class="total-label">${__("Paid Amount")}</div>
+                    <div class="value">${format_currency(paid_amount, currency)}</div>
+                </div>
+                <div class="seperator-y"></div>
+                <div class="col">
+                    <div class="total-label">${label}</div>
+                    <div class="value">${format_currency(change || remaining, currency)}</div>
+                </div>`
+            );
+
+
         }
 
         prepare_dom() {
@@ -293,6 +380,9 @@ frappe.require('point-of-sale.bundle.js', function () {
             frappe.dom.freeze();
             let __ = false;
 
+
+
+
             if (this.frm.doc.set_warehouse != this.settings.warehouse)
                 this.frm.doc.set_warehouse = this.settings.warehouse;
             let item_row = undefined;
@@ -303,10 +393,21 @@ frappe.require('point-of-sale.bundle.js', function () {
                 const item_row_exists = !$.isEmptyObject(item_row);
 
                 console.log('item_code [on_cart_update]', args.item.item_code)
+
                 // let selected_item = this.get_item(args.item.item_code);
 
                 let _ = await frappe.db.get_doc('Item', args.item.item_code).then((value) => {
                     console.log('🟠 selected_item', value);
+
+
+
+                    if (value.custom_is_virtual && value.custom_autocheckout) {
+
+                        setTimeout(() => {
+                            document.querySelector('.checkout-btn').click()
+                        }, 1500);
+                    }
+
 
                     if (cur_frm.doc.total_qty == 0) {
 
@@ -504,11 +605,21 @@ frappe.require('point-of-sale.bundle.js', function () {
                         bold_warehouse,
                     ]);
 
+                    let pos_profile_meta = frappe.get_doc("POS Profile", cur_pos.pos_profile)
+                    console.log(pos_profile_meta)
+                    
                     if (available_in_other_warehouse) {
+
+                        // let filteredData = _resp.message
+                        //     .filter(_warehouse => _warehouse.actual_qty > 0) // Only include warehouses with actual_qty > 0
+                        //     .map(_warehouse => `<a onclick="createMovement(${pos_profile_meta.warehouse},${_warehouse.warehouse},${item_row.item_code})" style='margin-top: var(--margin-lg );' target='_blank' href="/api/method/cpherbalist.api.redirect_to?_set_from_warehouse=${encodeURI(pos_profile_meta.warehouse)}&set_from_warehouse=${encodeURI(_warehouse.warehouse)}&set_warehouse=${encodeURI(_warehouse.warehouse)}&the_item=${encodeURI(item_row.item_code)}">${_warehouse.warehouse} (${_warehouse.actual_qty})</a><br>`)
+                        //     .join("");
+
                         let filteredData = _resp.message
                             .filter(_warehouse => _warehouse.actual_qty > 0) // Only include warehouses with actual_qty > 0
-                            .map(_warehouse => `<a style='margin-top: var(--margin-lg );' target='_blank' href="/api/method/cpherbalist.api.redirect_to?set_warehouse=${encodeURI(_warehouse.warehouse)}&the_item=${encodeURI(item_row.item_code)}">${_warehouse.warehouse} (${_warehouse.actual_qty})</a><br>`)
+                            .map(_warehouse => `<a onclick="createMovement('${pos_profile_meta.warehouse}','${_warehouse.warehouse}','${item_row.item_code}')" style='margin-top: var(--margin-lg );'>${_warehouse.warehouse} (${_warehouse.actual_qty})</a><br>`)
                             .join("");
+
                         //console.log("Available Warehouses:", availableWarehouses);
 
                         popup_message = __("Item Code: {0} is not available under warehouse {1}.<br><div style='margin-top: var(--margin-lg ); margin-bottom: var(--margin-lg );'><b>Available Locations</b></div>{2}", [
@@ -540,14 +651,21 @@ frappe.require('point-of-sale.bundle.js', function () {
 
 
     setTimeout(() => {
+        try {
             window.wrapper.pos = new erpnext.PointOfSale.Controller(wrapper);
-
             window.cur_pos = wrapper.pos;
+        } catch (error) {
+            
+        }
     }, 0);
 
 
 
 });
+
+function roundToNearestTenth(num) {
+    return Math.round(num * 10) / 10;
+  }
 
 
 
@@ -611,3 +729,6 @@ setTimeout(() => {
     })
 
 }, 0);
+
+
+

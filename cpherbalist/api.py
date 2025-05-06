@@ -15,7 +15,9 @@ from frappe.utils import (
 	nowdate,
 	parse_json,
 	time_diff_in_hours,
+    now_datetime
 )
+
 
 from erpnext.manufacturing.doctype.bom.bom import (
 	get_bom_item_rate,
@@ -36,6 +38,50 @@ def __init__(self):
     self.domain = frappe.request.host
     
     
+@frappe.whitelist()
+def create_pos_coupon_sales_order(item_code, value, customer, coupon_code ):
+    try:
+        
+        value = float(value) 
+        
+
+        pos_invoice = frappe.get_doc({
+            "doctype": "POS Invoice",
+            "is_pos": 1,
+            "update_stock": 1,
+            "pos_profile": "Ithomis",
+            "customer": customer,
+            "custom_remarks": f"Coupon Code: {coupon_code}, Value: {value}",
+            "items": [
+                {
+                    "item_code": item_code,
+                    "qty": 1,
+                    "rate": value
+                }
+            ],
+            "payments": [
+                {
+                    "mode_of_payment": "Cash",  # Adjust based on your POS Profile
+                    "amount": value
+                }
+            ]
+        })
+
+        pos_invoice.insert()
+        
+        return {
+            "status": "success",
+            "message": "POS invoice created as draft",
+            "invoice_name": pos_invoice.name
+        }
+
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "create_pos_coupon_sales_order")
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    # invoice.submit()
 
 @frappe.whitelist()
 def handle_pos_invoice_submit(doc, action):
@@ -43,6 +89,7 @@ def handle_pos_invoice_submit(doc, action):
     
     for d in doc.get("items"):
         frappe.log_error(f"⚠️ handle_pos_invoice_submit [items]",_("Row #{}: Item Code: {} Warehouse {}.").format(d.idx, d.item_code, d.warehouse))
+        
         if(frappe.db.exists("Product Bundle", {"new_item_code": d.item_code}) is not None):
             doc.custom_has_bundle = True
             bundle_items = get_bundle_items(d.item_code)
@@ -57,6 +104,47 @@ def get_bundle_items(bundle_item_code):
     bundle = frappe.get_doc("Product Bundle", {"new_item_code": bundle_item_code})
     return bundle.items
 
+
+@frappe.whitelist()
+def submit_matrial_request(doc, method=None): 
+    frappe.log_error("🔥 Hook triggered", f"Material Request: {doc.name}, docstatus: {doc.docstatus}")
+    
+    try:
+        doc.submit()
+        frappe.log_error("✅ submit_matrial_request success", f"Material Request: {doc.name}")
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "❌ Auto Submit Error")
+        
+@frappe.whitelist()
+def wc_coupon_sync(doc, method=None): 
+    frappe.log_error("✅ submit_wo success", f"doc: {doc}")
+
+@frappe.whitelist()
+def auto_create_stock_entry(item_code):
+    # Create new Stock Entry document
+    stock_entry = frappe.new_doc("Stock Entry")
+    
+    # Set required fields
+    stock_entry.stock_entry_type = "Material Receipt"
+    stock_entry.company = "CHRYSTALLENA POULLI HERBAL SKIN CARE PRODUCTS LTD"
+    stock_entry.to_warehouse = "Central - Ithomis - CP"  # Replace with your warehouse
+
+    # Add item(s)
+    stock_entry.append("items", {
+        "item_code": item_code,
+        "qty": 999,
+        "t_warehouse": "Central - Ithomis - CP",
+    })
+
+    # Save and submit
+    stock_entry.insert(ignore_permissions=True)
+    stock_entry.submit()
+
+    return stock_entry.name
+
+
+
+
 @frappe.whitelist()
 def submit_wo(doc, method=None): 
     frappe.log_error("🔥 Hook triggered", f"Work Order: {doc.name}, docstatus: {doc.docstatus}")
@@ -67,6 +155,33 @@ def submit_wo(doc, method=None):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "❌ Auto Submit Error")
 
+@frappe.whitelist()
+def log_seller_profile(s_user): 
+    try:
+        doc = frappe.get_doc({
+            'doctype': 'Seller Profile Logs',
+            'user': s_user,
+            'on': now_datetime(),  # Default to current datetime
+        })
+        
+        doc.insert()
+                
+        frappe.db.commit()
+        return doc.name
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "❌ Log Error")
+
+
+@frappe.whitelist()
+def submit_coupon(doc, method=None): 
+    frappe.log_error("🔥 Hook triggered", f"Coupon: {doc.name}, docstatus: {doc.docstatus}")
+
+    try:
+        doc.submit()
+        frappe.log_error("✅ submit_coupon success", f"Coupon: {doc.name}")
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "❌ Auto Submit Error")
 
 
 @frappe.whitelist()
@@ -89,11 +204,37 @@ def on_wo_submitted(doc, method=None):
         
         
 @frappe.whitelist()
-def redirect_to(set_warehouse,the_item):
+def redirect_to_v1(set_warehouse,the_item):
     from frappe.auth import CookieManager, LoginManager
+    
+    # set_warehouse = Set Target Warehouse
+    # set_from_warehouse = Set Source Warehouse
     frappe.local.cookie_manager = CookieManager()
+    
+    
+    
     frappe.local.cookie_manager.set_cookie("set_warehouse", set_warehouse)
     frappe.local.cookie_manager.set_cookie("request_item", the_item)
+    frappe.local.response["type"] = "redirect"
+    frappe.local.response["location"] = ("/app/material-request/new-material-request")
+    
+    
+@frappe.whitelist()
+def redirect_to(set_from_warehouse, set_warehouse,the_item):
+    from frappe.auth import CookieManager, LoginManager
+    
+    
+    # set_warehouse = Set Target Warehouse
+    # set_from_warehouse = Set Source Warehouse
+    
+
+    frappe.local.cookie_manager = CookieManager()
+    
+    frappe.local.cookie_manager.set_cookie("set_from_warehouse", set_from_warehouse)
+    frappe.local.cookie_manager.set_cookie("set_warehouse", set_warehouse)
+    frappe.local.cookie_manager.set_cookie("request_item", the_item)
+    
+    
     frappe.local.response["type"] = "redirect"
     frappe.local.response["location"] = ("/app/material-request/new-material-request")
     
@@ -110,7 +251,11 @@ def create_cookie(key,value):
     from frappe.auth import CookieManager, LoginManager
     frappe.local.cookie_manager = CookieManager()
     frappe.local.cookie_manager.set_cookie(key, value)
-    
+
+def generate_coupon_code(length=10):
+    chars = string.ascii_uppercase + string.digits
+    coupon = ''.join(random.choices(chars, k=length))
+    return coupon
 
 @frappe.whitelist()
 def perform_item_bulk_action(item, percent_value=0, fixed_value=0, decrease=0, round = 0):  
@@ -239,3 +384,5 @@ def get_custom_setting(setting_name, doctype='Custom Setting'):
     except Exception as e:
         frappe.log_error(f"Error retrieving custom setting {setting_name}: {e}")
         return None
+    
+    

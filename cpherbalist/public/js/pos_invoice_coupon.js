@@ -14,43 +14,6 @@ var itemsToReserved = [];
 // qty 
 // rate
 
-
-
-frappe.ui.form.on('Coupon Code', {
-    onload: function(listview) {
-        listview.page.add_inner_button('Generate Bulk Coupons', () => {
-            frappe.call({
-                method: 'my_app.my_app.doctype.coupon.coupon.generate_bulk_coupons',
-                args: {
-                    count: 10  // for example
-                },
-                callback: function(r) {
-                    frappe.msgprint(__('Generated ' + r.message + ' coupons.'));
-                    listview.refresh();
-                }
-            });
-        });
-    },
-    refresh: function(frm) {
-        // Add button only for new or draft documents
-        if (!frm.doc.__islocal && frm.doc.docstatus === 0) {
-            frm.add_custom_button('Generate Code', function() {
-                frappe.call({
-                    method: "cpherbalist.wc_extensions.sync_wc_coupons",
-                    callback: function(r) {
-                        if (r.message) {
-                            //frm.set_value("coupon_code", r.message);
-                            frappe.msgprint("New coupon code generated!");
-                        }
-                    }
-                });
-            });
-        }
-    }
-});
-
-
-
 var baseAmount = 0;
 var outstandingAmount = 0;
 
@@ -347,10 +310,6 @@ frappe.ui.form.on('POS Invoice', {
             console.log('Reset Coupon')
             frm.toggle_display('custom_apply_coupon', 1)
         }
-
-
-
-
     },
 
     validate(frm) {
@@ -1052,6 +1011,9 @@ frappe.ui.form.on('POS Invoice', {
 
 
                         let remaining_amount = total_amount - coupon_amount;
+
+
+
 
 
 

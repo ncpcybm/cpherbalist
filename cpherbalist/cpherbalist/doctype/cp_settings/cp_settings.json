@@ -11,21 +11,20 @@
   "pos_sales_profile_expiration",
   "column_break_qrnz",
   "auto_submit_created_stock_entry",
+  "woocommerce_sync",
   "warehouse_section",
-  "default_warehouse",
-  "autosubmit_workorder"
+  "default_target_warehouse",
+  "default_source_warehouse",
+  "autosubmit_workorder",
+  "column_break_rxxj",
+  "misc_section",
+  "default_voucher_product"
  ],
  "fields": [
   {
    "fieldname": "warehouse_section",
    "fieldtype": "Section Break",
    "label": "Warehouse"
-  },
-  {
-   "fieldname": "default_warehouse",
-   "fieldtype": "Link",
-   "label": "Default Warehouse",
-   "options": "Warehouse"
   },
   {
    "default": "1",
@@ -69,13 +68,48 @@
    "fieldname": "auto_submit_created_stock_entry",
    "fieldtype": "Check",
    "label": "Auto-submit Created Stock Entry"
+  },
+  {
+   "fieldname": "column_break_rxxj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_target_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Target Warehouse",
+   "link_filters": "[[\"Warehouse\",\"disabled\",\"=\",0]]",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "default_source_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Source Warehouse",
+   "link_filters": "[[\"Warehouse\",\"disabled\",\"=\",0]]",
+   "options": "Warehouse"
+  },
+  {
+   "default": "0",
+   "fieldname": "woocommerce_sync",
+   "fieldtype": "Check",
+   "label": "WooCommerce Sync"
+  },
+  {
+   "fieldname": "misc_section",
+   "fieldtype": "Section Break",
+   "label": "Misc"
+  },
+  {
+   "fieldname": "default_voucher_product",
+   "fieldtype": "Link",
+   "label": "Default Voucher Product",
+   "options": "Item"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-28 11:00:23.192836",
+ "modified": "2025-05-05 15:48:19.876286",
  "modified_by": "Administrator",
  "module": "Cpherbalist",
  "name": "CP Settings",

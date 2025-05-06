@@ -75,9 +75,29 @@ frappe.ui.form.on('POS Closing Entry', {
     onload(frm) {
         frappe.dom.unfreeze();
 
-
     }
 })
+
+
+function setCookie(name, value, days = 7, path = "/") {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)};${expires};path=${path}`;
+}
+
+
+function createMovement(set_from_warehouse,set_warehouse,the_item) {
+
+    setCookie('set_from_warehouse', set_from_warehouse)
+    setCookie('set_warehouse', set_warehouse)
+    setCookie('the_item',the_item)
+
+    window.location = "/app/material-request/new-material-request";
+    
+}
+
+
 
 get_warehouse_names = () => {
     frappe.call({
@@ -124,6 +144,7 @@ frappe.require('point-of-sale.bundle.js', function () {
     erpnext.PointOfSale.Controller = class MyPosController extends erpnext.PointOfSale.Controller {
         constructor(wrapper) {
             super(wrapper);
+
 
             this.get_opening_entry().then((res) => {
 
@@ -386,6 +407,17 @@ frappe.require('point-of-sale.bundle.js', function () {
 
                 let _ = await frappe.db.get_doc('Item', args.item.item_code).then((value) => {
                     console.log('🟠 selected_item', value);
+                    console.log('✨ Update ...')
+
+
+
+                    if (value.custom_is_virtual && value.custom_autocheckout) {
+
+                        setTimeout(() => {
+                            document.querySelector('.checkout-btn').click()
+
+                        }, 1500);
+                    }
 
 
                     if (cur_frm.doc.total_qty == 0) {
@@ -447,13 +479,6 @@ frappe.require('point-of-sale.bundle.js', function () {
                 if (!_ && window.is_deposit) {
                     return this.raise_item_deposit_alert()
                 }
-
-                //console.log(_)
-
-                if (!_ && window.is_cp) {
-                    return this.raise_item_cp_alert();
-                }
-
 
                 const from_selector = field === "qty" && value === "+1";
                 if (from_selector) value = flt(item_row.qty) + flt(value);
@@ -521,10 +546,16 @@ frappe.require('point-of-sale.bundle.js', function () {
                 console.log(error);
             } finally {
                 frappe.dom.unfreeze();
+
+
+
+
                 return item_row; // eslint-disable-line no-unsafe-finally
+
             }
 
         }
+
 
         init_item_selector() {
             this.item_selector = new erpnext.PointOfSale.ItemSelector({
@@ -585,12 +616,19 @@ frappe.require('point-of-sale.bundle.js', function () {
                         bold_warehouse,
                     ]);
 
+                    let pos_profile_meta = frappe.get_doc("POS Profile", cur_pos.pos_profile)
+
                     if (available_in_other_warehouse) {
+
+                        // let filteredData = _resp.message
+                        //     .filter(_warehouse => _warehouse.actual_qty > 0) // Only include warehouses with actual_qty > 0
+                        //     .map(_warehouse => `<a onclick="createMovement(${pos_profile_meta.warehouse},${_warehouse.warehouse},${item_row.item_code})" style='margin-top: var(--margin-lg );' target='_blank' href="/api/method/cpherbalist.api.redirect_to?_set_from_warehouse=${encodeURI(pos_profile_meta.warehouse)}&set_from_warehouse=${encodeURI(_warehouse.warehouse)}&set_warehouse=${encodeURI(_warehouse.warehouse)}&the_item=${encodeURI(item_row.item_code)}">${_warehouse.warehouse} (${_warehouse.actual_qty})</a><br>`)
+                        //     .join("");
+
                         let filteredData = _resp.message
                             .filter(_warehouse => _warehouse.actual_qty > 0) // Only include warehouses with actual_qty > 0
-                            .map(_warehouse => `<a style='margin-top: var(--margin-lg );' target='_blank' href="/api/method/cpherbalist.api.redirect_to?set_warehouse=${encodeURI(_warehouse.warehouse)}&the_item=${encodeURI(item_row.item_code)}">${_warehouse.warehouse} (${_warehouse.actual_qty})</a><br>`)
+                            .map(_warehouse => `<a onclick="createMovement('${pos_profile_meta.warehouse}','${_warehouse.warehouse}','${item_row.item_code}')" style='margin-top: var(--margin-lg );'>${_warehouse.warehouse} (${_warehouse.actual_qty})</a><br>`)
                             .join("");
-                        //console.log("Available Warehouses:", availableWarehouses);
 
                         popup_message = __("Item Code: {0} is not available under warehouse {1}.<br><div style='margin-top: var(--margin-lg ); margin-bottom: var(--margin-lg );'><b>Available Locations</b></div>{2}", [
                             bold_item_code,

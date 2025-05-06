@@ -1,11 +1,35 @@
 
 frappe.ui.form.on('Item', {
-    onload_post_render: function(frm) {
+    refresh: function(frm) {
         // Remove existing button (if any) to avoid duplicates
         frm.remove_custom_button('Open BOM');
 
         // Check if item has BOMs
         if (!frm.is_new()) {
+
+
+
+
+            frm.add_custom_button(__('Move Stock to Default Warehouse'), function() {
+                frappe.confirm(
+                    'Move all stock for this item to its default warehouse?',
+                    function() {
+                        frappe.call({
+                            method: 'cpherbalist.stock_entry_extensions.move_stock_to_default_warehouse',
+                            args: {
+                                item_code: frm.doc.name
+                            },
+                            callback: function(r) {
+                                if (!r.exc) {
+                                    frappe.msgprint(r.message || 'Stock moved successfully.');
+                                }
+                            }
+                        });
+                    }
+                );
+            });
+
+
             frappe.call({
                 method: "frappe.client.get_list",
                 args: {
@@ -39,8 +63,27 @@ frappe.ui.form.on('Item', {
                         });
                     }
 
-                    frm.add_custom_button('Create Stock Entry', function() { 
+                    frm.add_custom_button('Create Stock Entry (TEST)', function() {
 
+                        frappe.call({
+                            method: "cpherbalist.api.auto_create_stock_entry",  // Adjust this
+                            args: {
+                                item_code: cur_frm.doc.name
+                            },
+                            callback: function(r) {
+                                if (r.message) {
+                                    frappe.msgprint("✅ Stock Entry created: " + r.message);
+                                } else {
+                                    frappe.msgprint("❌ Failed to create stock entry.");
+                                }
+                            }
+                        });
+
+                    });
+
+
+
+                    frm.add_custom_button('Create Stock Entry', function() { 
 
                         let default_source_warehouse = undefined; 
                         let default_target_warehouse = undefined; 
@@ -59,16 +102,19 @@ frappe.ui.form.on('Item', {
                             });
 
 
- 
                         frappe.model.with_doctype('Stock Entry', function() {
+
                             let se = frappe.model.get_new_doc('Stock Entry');
                             se.stock_entry_type = 'Material Receipt';
+                            
+                            document.cookie = `material_receipt_item_code=${frm.doc.name}; path=/; max-age=86400`; 
+
                     
                             se.items = [{
                                 item_code: frm.doc.name,
                                 qty: 1,
-                                s_warehouse: default_source_warehouse ?? 'Factory - CP',
-                                t_warehouse: default_target_warehouse ?? 'Finished Goods - CP',
+                                // s_warehouse: default_source_warehouse ?? 'Factory - CP',
+                                // t_warehouse: default_target_warehouse ?? 'Finished Goods - CP',
                                 basic_rate: 1
                             }];
                     
@@ -83,6 +129,10 @@ frappe.ui.form.on('Item', {
                 }
             });
         }
+    },
+
+    onload_post_render: function(frm) {
+
     }
 });
 
@@ -142,6 +192,37 @@ frappe.ui.form.on('Work Order', {
                             });
                             frm.refresh_field('required_items');
                         }, 500);
+
+
+                        frappe.call({
+                            method: "run_doc_method",
+                            args: {
+                                docs: {
+                                    "name": "Document Naming Settings",
+                                    "owner": "Administrator",
+                                    "modified": "2025-04-29 11:38:26.876874",
+                                    "modified_by": "Administrator",
+                                    "docstatus": 0,
+                                    "idx": "0",
+                                    "user_must_always_select": 0,
+                                    "current_value": 0,
+                                    "default_amend_naming": "Amend Counter",
+                                    "doctype": "Document Naming Settings",
+                                    "amend_naming_override": [],
+                                    "transaction_type": "Work Order",
+                                    "__unsaved": 1
+                                },
+                                method: "get_options"
+                            },
+                            callback: function(response) {
+                                cur_frm.set_value('naming_series', response.message);
+
+                            }
+                        });
+
+
+
+
                     }
 
                 } 

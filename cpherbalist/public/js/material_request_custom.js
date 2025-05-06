@@ -13,6 +13,9 @@ function getCookie(name) {
     return null;
 }
 
+
+
+
 function isUrlEncoded(str) {
     try {
         // Try decoding the string
@@ -46,25 +49,26 @@ frappe.ui.form.on('Material Request', {
     },
     on_submit(frm) {
 
-        frappe.db.get_doc('CP Settings').then((mdgs) => {
+        console.log('Notification ... ')
+        // frappe.db.get_doc('CP Settings').then((mdgs) => {
 
-            console.log('Notification ... ')
+        //     console.log('Notification ... ')
 
-            if (mdgs.auto_create_material_transfer) {
-                // frappe.dom.freeze()
-                // document.querySelector('.freeze-message').innerHTML = 'Please Wait ... 🔃'
-                frm.events.auto_in_transit_stock_entry(frm, mdgs);
+        //     if (mdgs.auto_create_material_transfer) {
+        //         // frappe.dom.freeze()
+        //         // document.querySelector('.freeze-message').innerHTML = 'Please Wait ... 🔃'
+        //         frm.events.auto_in_transit_stock_entry(frm, mdgs);
 
-                frappe.call({
-                    method: "cpherbalist.material_request_custom.post_notification",
-                    type: "POST",
-                    args: { from_warehouse: cur_frm.doc.set_warehouse, to_warehouse: cur_frm.doc.set_from_warehouse, material_request_doc: frm.doc.name },
-                    success: function (r) { },
-                    error: function (r) { console.error(r) },
-                    always: function (r) { }
-                });
-            }
-        })
+        //         frappe.call({
+        //             method: "cpherbalist.material_request_custom.post_notification",
+        //             type: "POST",
+        //             args: { from_warehouse: cur_frm.doc.set_warehouse, to_warehouse: cur_frm.doc.set_from_warehouse, material_request_doc: frm.doc.name },
+        //             success: function (r) { },
+        //             error: function (r) { console.error(r) },
+        //             always: function (r) { }
+        //         });
+        //     }
+        // })
 
 
 
@@ -72,112 +76,31 @@ frappe.ui.form.on('Material Request', {
     onload_post_render: async function (frm) {
         //console.log(":: onload_post_render ::" + (frm.is_new() === 1 && (getCookie('set_warehouse') != null)));
 
-        debugger;
 
+
+
+
+
+
+        return; 
+
+        console.log('🔃 ' + decodeURI(getCookie('set_from_warehouse')))
+        console.log('🔃 ' + decodeURI(getCookie('set_warehouse')))
+        console.log('🔃 ' + decodeURI(getCookie('the_item')))
+
+        window.user_warehouse = decodeURI(getCookie('set_warehouse'));
+        
         if (frm.is_new() === 1 && (getCookie('set_warehouse') != null)) {
 
-            let cookieValue = decodeURI(getCookie('set_warehouse'));
-            let requested_items = decodeURI(getCookie('request_item'));
-            let fullyDecoded;
+            let requested_items = decodeURI(getCookie('the_item'));
 
-            setTimeout(() => {
-                try {
-                    if ((cookieValue != null) || (cookieValue != undefined)) {
-                        console.log(cookieValue);
-                        let doubleEncodedString = cookieValue;
-                        let decodedOnce = decodeURI(doubleEncodedString);
-                        fullyDecoded = decodeURI(decodedOnce);
+            frm.set_value('set_from_warehouse', decodeURI(getCookie('set_from_warehouse')))
+            frm.set_value('set_warehouse', decodeURI(getCookie('set_warehouse')))
 
-
-                        console.log(fullyDecoded);
-                        frm.set_value('set_from_warehouse', fullyDecoded)
-
-                        x = frappe.db.get_doc('User', frappe.session.user_email).then((result) => {
-
-                            let selected_warehouse = result.warehouse ?? frappe.user_defaults['default_warehouse'];
-
-                            frm.set_value('set_warehouse', selected_warehouse)
-                            // frm.set_value('set_from_warehouse', frappe.user_defaults['default_warehouse'])
-                            frm.set_df_property('set_warehouse', 'read_only', 0);
-                        }).catch((err) => {
-
-                        });
-
-
-                        //frm.set_df_property('set_from_warehouse', 'read_only', 1);
-
-                    }
-                } catch (error) { }
-
-                if ((requested_items != null) || (requested_items != undefined)) {
-
-                    if (frm.doc.items && frm.doc.items.length > 0) {
-                        let first_row = frm.doc.items[0];
-                        if (!first_row.item_code && !first_row.qty && !first_row.rate) {
-                            frm.doc.items = frm.doc.items.slice(1);  // Remove the first empty row
-                            frm.refresh_field('items');
-                        }
-                    }
-
-                    console.log('requested_items: ', requested_items); // This will print the value of the cookie
-
-                    if (window.user_warehouse) {
-                        cur_frm.add_child('items', { 'item_code': `${requested_items}`, 'schedule_date': frappe.datetime.get_today(), 'qty': 1, 'warehouse': `${window.user_warehouse}` });
-
-                    } else {
-                        cur_frm.add_child('items', { 'item_code': `${requested_items}`, 'schedule_date': frappe.datetime.get_today(), 'qty': 1, 'warehouse': `${fullyDecoded}` });
-                    }
-
-                    cur_frm.refresh_field('items');
-
-                }
-
-                //deleteCookie('requested_items');
-                //deleteCookie('set_warehouse');
-
-                frappe.call({
-                    method: "cpherbalist.api.clear_cookies",
-                    callback: function (r) {
-
-                        if (document.querySelector('.freeze-message')) {
-                            document.querySelector('.freeze-message').innerHTML = ''
-                            frappe.dom.unfreeze();
-                        }
-
-                        frm.set_value('material_request_type', 'Material Transfer')
-                        frm.set_value('schedule_date', frappe.datetime.get_today())
-
-                        set_source_warehouse_items(frm);
-
-                        frappe.db.get_doc('CP Settings').then(mdgs => {
-                            console.log(mdgs.auto_submit_material_transfer)
-
-                            if (mdgs.auto_submit_material_transfer === 1) {
-                                frappe.validated = true;
-                                cur_frm.savesubmit()
-                            }
-                        })
-                    }
-                }).then(res => { 
-
-                    console.log('Auto Submit .....')
-
-
-                });
-
-
-                frappe.db.get_doc('User', 'pos_ithomis@cpherbalist.com').then(r=> {
-
-                    frm.set_value('set_warehouse', r.default_warehouse)
-
-
-                    //console.log(r.default_warehouse) 
-                })
+            cur_frm.add_child('items', { 'item_code': `${requested_items}`, 'schedule_date': frappe.datetime.get_today(), 'qty': 1, 'warehouse': `${decodeURI(getCookie('set_from_warehouse'))}` });
 
 
 
-
-            }, 0)
 
         }
         else if (cur_frm.doc.status === '') {
@@ -189,13 +112,13 @@ frappe.ui.form.on('Material Request', {
 
                 //frm.set_df_property('set_warehouse', 'read_only', 1);
 
-                set_source_warehouse_items(frm);
+                //set_source_warehouse_items(frm);
 
 
             }).catch((err) => {
 
 
-                frm.set_value('set_warehouse', "Central - MDG")
+                frm.set_value('set_warehouse', "Central - Ithomis - CP")
 
                 frm.set_df_property('set_warehouse', 'read_only', 0);
                 frm.set_value('set_from_warehouse', '')
@@ -208,6 +131,37 @@ frappe.ui.form.on('Material Request', {
     },
     onload: async function (frm) {
 
+
+        frm.doc.items = [];
+
+
+        setTimeout(() => {
+            cur_frm.set_value('material_request_type', 'Material Transfer');
+        
+            set_from_warehouse = decodeURI(getCookie('set_from_warehouse'))
+            set_warehouse = decodeURI(getCookie('set_warehouse'))
+            
+            frm.set_value('set_from_warehouse', set_warehouse)
+            frm.set_value('set_warehouse', set_from_warehouse )
+
+
+            let requested_items = decodeURI(getCookie('the_item'));
+            let new_row = frm.add_child('items');  
+        
+            new_row.item_code = requested_items;  
+            new_row.qty = 1;               
+            new_row.s_warehouse = set_from_warehouse;  
+            new_row.t_warehouse = set_warehouse;  
+            new_row.schedule_date = frappe.datetime.get_today()
+        
+        
+            //cur_frm.add_child('items', { 'item_code': `${requested_items}`, 'schedule_date': frappe.datetime.get_today(), 'qty': 1, 'warehouse': `${decodeURI(getCookie('set_from_warehouse'))}` });
+        
+            frm.refresh_field('items');
+        
+        }, 1);
+
+        return;
         if (frm.is_new() === 1 && (getCookie('set_warehouse') != null)) {
 
             if (getCookie('set_warehouse')) {

@@ -27,19 +27,45 @@ add_to_apps_screen = [
         "logo": " http://91.107.236.18/files/cpherbalist-logo-black.png",
         "title": "POS",
         "route": "app/point-of-sale",
+        "has_permission": "erpnext.check_app_permission",
+
     }
 ]
+
+
+website_context = {
+	"favicon": "/assets/erpnext/images/erpnext-favicon.svg",
+	"splash_image": "http://91.107.236.18/files/cpherbalist-logo-black.png",
+}
 
 # Includes in <head>
 # ------------------ 
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/cpherbalist/css/cpherbalist.css"
-app_include_js = ["/assets/cpherbalist/js/stock_entry.js", "/assets/cpherbalist/js/cpherbalist.js", "/assets/cpherbalist/js/utils.js", "/assets/cpherbalist/js/autoapply_coupon_on_pos.js", "/assets/cpherbalist/js/pos_custom.js","/assets/cpherbalist/js/pos_invoice_coupon.js", "/assets/cpherbalist/js/coupon_extensions.js", "/assets/cpherbalist/js/manufacturing_extensions.js"]
+
+# app_include_js = "/assets/cpherbalist/dist/js/cpherbalist.bundle.js"
+
+app_include_js = ["/assets/cpherbalist/js/cpherbalist.js",
+                  "/assets/cpherbalist/js/custom_item.js",
+                  "/assets/cpherbalist/js/stock_entry.js",
+                  "/assets/cpherbalist/js/utils.js",
+                  "/assets/cpherbalist/js/pos_invoice_coupon.js",
+                  "/assets/cpherbalist/js/coupon_extensions.js",
+                  "/assets/cpherbalist/js/manufacturing_extensions.js", 
+                  "/assets/cpherbalist/js/customer_extensions.js", 
+                  "/assets/cpherbalist/js/customer_list.js"
+                ]
+
+
 
 # include js, css files in header of web template
 web_include_css = "/assets/cpherbalist/css/cpherbalist.css"
-web_include_js = ["/assets/cpherbalist/js/cpherbalist.js", "/assets/cpherbalist/js/utils.js", "/assets/cpherbalist/js/autoapply_coupon_on_pos.js"]
+
+# web_include_js = ["/assets/cpherbalist/js/cpherbalist.js", 
+#                   "/assets/cpherbalist/js/utils.js", 
+#                   "/assets/cpherbalist/js/autoapply_coupon_on_pos.js"
+#                   ]
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "cpherbalist/public/scss/website"
@@ -54,12 +80,15 @@ web_include_js = ["/assets/cpherbalist/js/cpherbalist.js", "/assets/cpherbalist/
 page_js = {"point-of-sale" : [ 
     "public/js/custom_item.js", 
     "public/js/pos_item_selector_extension.js",
-    "public/js/pos_custom.js",
-
-
-    ]}
+    "public/js/pos_custom.js"
+    ]
+    
+    }
 
 # include js in doctype views
+
+# after_migrate = ["cpherbalist.stock_entry_extensions.enqueue_stock_transfer"]
+
 
 
 doctype_js = {
@@ -68,6 +97,11 @@ doctype_js = {
     # "Delivery Note MDG" : "public/js/custom_delivery_notes.js"
 }
 
+
+
+# doctype_list_js = {
+#     "Customer" : "public/js/customer_list.js"
+# }
 
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -186,6 +220,13 @@ doc_events = {
         "after_insert": "cpherbalist.api.submit_wo",
         "on_submit": "cpherbalist.api.on_wo_submitted",
         # "valid1ate": "your_app.api.validate_pos_invoice"
+    },
+    "Material Request": {
+        # "after_insert": "cpherbalist.api.submit_matrial_request",
+        # "valid1ate": "your_app.api.validate_pos_invoice"
+    },
+    "Coupon Code": {
+        "after_insert": "cpherbalist.api.wc_coupon_sync"
     }
 }
 
@@ -294,5 +335,4 @@ sounds = [
 ]
 
 
-
-fixtures = ["Users PIN", "Letter Head", "Report"]
+# fixtures = ["Users PIN", "Letter Head", "Report"]
