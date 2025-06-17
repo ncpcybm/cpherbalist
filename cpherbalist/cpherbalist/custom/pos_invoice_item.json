@@ -17,7 +17,7 @@
    "field_name": "barcode",
    "idx": 0,
    "is_system_generated": 1,
-   "modified": "2025-04-14 09:47:54.232979",
+   "modified": "2025-06-02 14:15:19.316828",
    "modified_by": "Administrator",
    "module": null,
    "name": "POS Invoice Item-barcode-hidden",

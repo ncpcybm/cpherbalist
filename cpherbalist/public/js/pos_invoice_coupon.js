@@ -29,6 +29,8 @@ validate_discount_not_exceed_total_amount = (total, discount_amount) => {
 
 
 
+
+
 apply_coupon = async (e) => {
     let t = await frappe.call({
         method: "cpherbalist.pos.apply_coupon_code",
@@ -52,14 +54,26 @@ custom_remove_coupon = async (e) => {
     cur_frm.set_value('discount_amount', 0);
     readjustPaymentMethod(0)
     remove_remarks();
+
     $(`.mode-of-payment[data-mode="cash"]`)[0].click()
 
     let credit_forward_amount_element = document.querySelector('input[data-fieldname="custom_credit_forward_amount_"]');
     credit_forward_amount_element.value = 0;
-    frm.doc.custom_credit_forward_amount_ = 0;
-
+    cur_frm.doc.custom_credit_forward_amount_ = 0;
     //console.log(cur_frm);
+
+
+
+
 };
+
+
+
+show_autosuggest_for_testers = () => {
+
+
+}
+
 
 show_remove_coupons_button = () => {
     // add remove coupon button.
@@ -83,10 +97,10 @@ show_remove_coupons_button = () => {
 
 set_credit_forward_amount = (amount, frm = Object) => {
     let credit_forward_amount_element = document.querySelector('input[data-fieldname="custom_credit_forward_amount_"]');
+ 
     credit_forward_amount_element.value = amount;
 
-    frm.doc.custom_credit_forward_amount_ = amount;
-
+    frm.doc.custom_credit_forward_amount_ = amount.toFixed(2);
 
     document.querySelector('input[data-fieldname="custom_credit_forward_amount_"]').readOnly = true;
 };
@@ -164,11 +178,11 @@ apply_discount = (frm, amount, couponCode) => {
         frm.set_value('discount_amount', netTotalAmount)
 
         if (applied_coupons.length >= 2) {
-            frm.set_value('custom_credit_forward_amount_', parseFloat(difference_amount))
+            frm.set_value('custom_credit_forward_amount_', parseFloat(difference_amount).toFixed(2))
             set_credit_forward_amount(parseFloat(difference_amount));
 
         } else {
-            frm.set_value('custom_credit_forward_amount_', parseFloat(difference_amount))
+            frm.set_value('custom_credit_forward_amount_', parseFloat(difference_amount).toFixed(2))
             set_credit_forward_amount(parseFloat(difference_amount));
         }
 
@@ -193,9 +207,9 @@ apply_discount = (frm, amount, couponCode) => {
     //add_remark(msg);
 }
 
+// TODO: UPDATE
 get_applied_coupons = () => {
-    let couponCode = document.querySelector('textarea[data-fieldname="custom_coupon_code"]').value.trim();
-    let lines = couponCode.split(/\r?\n/).filter(line => line.trim() !== '');
+    let lines = document.querySelector('input[data-fieldname="custom_coupon_code"]').value.replace('.',' ').split(' ').filter(line => line.trim() !== '')
     return lines;
 }
 
@@ -278,9 +292,8 @@ init_select2_events = () => {
 
         add_remark(remarks);
     });
-
-    // create_remarks_for_selected_items
-
+    
+    // create_remarks_for_selected_item
 }
 
 formatData = (data) => {
@@ -306,6 +319,56 @@ frappe.ui.form.on('POS Invoice', {
             frm.toggle_display('custom_apply_coupon', 0)
         }
 
+        if (frm.is_new())
+        {
+            function makeid(length) {
+                var result           = '';
+                var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                var charactersLength = characters.length;
+                for ( var i = 0; i < length; i++ ) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                }
+                return result;
+            }
+
+            cur_frm.set_value("custom_survey_reference_code",makeid(8),'',null)
+
+
+            frappe.db.get_doc('CP Settings').then(x => {
+
+                console.log(x.pos_invoice_questionersurvey)
+                let randomiseFactor = undefined;
+                
+                if (x.pos_invoice_questionersurvey.filter(iqs => iqs.active === 1).length >= 1) {
+                    
+                    if (x.pos_invoice_questionersurvey.filter(iqs => iqs.active === 1)[0].randomise_sample) {
+                        randomiseFactor = x.pos_invoice_questionersurvey.filter(iqs => iqs.active === 1)[0].randomise_factor;
+                        console.log('randomiseFactor', randomiseFactor.split('/'))
+                        cur_frm.set_value("custom_randomise_factor",randomBool(parseFloat(randomiseFactor.split('/')[0])/100),'',null)
+                    } else {
+
+                        cur_frm.set_value("custom_randomise_factor",1,'',null)
+
+                    }
+                    
+                }
+
+
+                function randomBool50_50() {
+                    return Math.random() < 0.5;
+                }
+
+                function randomBool(probabilityTrue = 0.6) {
+                    return Math.random() < probabilityTrue;
+                }
+                
+            })
+
+
+
+        }
+
+
         if (frm.doc.is_return) {
             console.log('Reset Coupon')
             frm.toggle_display('custom_apply_coupon', 1)
@@ -313,6 +376,14 @@ frappe.ui.form.on('POS Invoice', {
     },
 
     validate(frm) {
+
+        // Allow zero rate items during POS invoice
+        frm.doc.items.forEach(function(item) {
+            if (item.rate == 0) {
+                console.log(`Zero-rated item: ${item.item_name}`);
+                
+            }
+        });
 
         if (!checkoutFlag) {
             if (cur_frm.doc.items.some(i => i.item_name === "DEPOSIT")) {
@@ -324,18 +395,352 @@ frappe.ui.form.on('POS Invoice', {
 
 
         checkoutFlag = true;
+
     },
     custom_item_reserved_status: function (frm) {
 
 
     },
+    before_submit: function (frm) {
 
+    },
 
+    // TODO: SYNC
     on_submit: function (frm) {
         console.log(":: on submit ::")
         console.log(" ++ DOCUMENT IS SUBMITTED NOW ++", frm.doc);
+
+        if (frm.doc.is_return) {
+
+            // Create new coupon code with the value of 
+
+
+        } else {
+            let custom_credit_forward_amount_ = frm.doc.custom_credit_forward_amount_;
+            let _couponCode = get_applied_coupons();
+            let last_coupon = _couponCode[_couponCode.length - 1];
+    
+            if (_couponCode.length >= 1) {
+    
+                if (custom_credit_forward_amount_ > 0 && _couponCode.length >= 2) {
+    
+                    _couponCode.forEach((c) => {
+    
+                        frappe.call({
+                            method: "cpherbalist.pos.redeem_coupon",
+                            args: {
+                                coupon_code: c,
+                            }
+                        }).then((result) => {
+    
+                            frappe.call({
+                                method: "cpherbalist.pos.update_coupon_balance",
+                                args: {
+                                    coupon_code: c,
+                                    balance: 0
+                                }
+                            })
+                                .then((result) => {
+    
+                                    if (c === last_coupon) {
+                                        frappe.call({
+                                            // reactivate_coupon
+                                            // update_coupon_balance
+                                            method: "cpherbalist.pos.reactivate_coupon",
+                                            args: {
+                                                coupon_code: last_coupon,
+                                                balance: custom_credit_forward_amount_
+                                            }
+                                        })
+                                            .then((result) => { })
+                                            .catch((err) => { });
+                                    }
+                                })
+                                .catch((err) => { });
+    
+                        }).catch((err) => { });
+                    })
+                } else {
+                    
+                    if (custom_credit_forward_amount_ > 0) {
+    
+                            frappe.call({
+                                method: "cpherbalist.pos.get_coupon_name_by_code",
+                                args: { code: _couponCode[0] },
+                                callback: function(r) {
+                                    if (r.message) {
+                                        console.log("Coupon Name:", r.message[0].coupon_code);
+        
+                                        frappe.call({
+                                            method: "cpherbalist.pos.update_coupon_balance",
+                                            args: {
+                                                coupon_code: _couponCode[0],
+                                                balance: custom_credit_forward_amount_
+                                            }
+                                        })
+                                            .then((result) => { })
+                                            .catch((err) => { });
+                                    } else {
+                                        console.log("Coupon not found.");
+                                    }
+                                }
+                            })
+    
+                    } else {
+                        frappe.call({
+                            method: "cpherbalist.pos.redeem_coupon",
+                            args: {
+                                coupon_code: _couponCode[0],
+                            }
+                        }).then((result) => {
+    
+                            frappe.call({
+                                method: "cpherbalist.pos.update_coupon_balance",
+                                args: {
+                                    coupon_code: _couponCode[0],
+                                    balance: custom_credit_forward_amount_
+                                }
+                            })
+                                .then((result) => { })
+                                .catch((err) => { });
+    
+                        }).catch((err) => { });
+    
+                    }
+                }
+            }
+    
+            if (isDeposit) {
+                let paidCreditedInvoice = cur_frm.doc.custom_reference_invoice != '';
+                let custom_reference_invoice_exist = cur_frm.custom_reference_invoice != null || cur_frm.custom_reference_invoice != '' || cur_frm.custom_reference_invoice != undefined;
+    
+    
+                if (paidCreditedInvoice && (itemsToReserved.length > 1)) {
+                    frappe.validated = false;
+                    frappe.throw(__("You can not create transaction contain reference invoice and product."))
+                    return false;
+                } else if (!paidCreditedInvoice && (itemsToReserved.length === 0)) {
+                    frappe.validated = false;
+                    frappe.throw(__("Please select either a product or reference invoice."))
+                    return false;
+                } else if (itemsToReserved.length >= 1 && (cur_frm.doc.custom_item_reserved_status === null || cur_frm.doc.custom_item_reserved_status == '' || cur_frm.doc.custom_item_reserved_status === undefined)
+                    && (cur_frm.custom_reference_invoice != null || cur_frm.custom_reference_invoice != '' || cur_frm.custom_reference_invoice != undefined)) {
+                    cur_frm.toggle_reqd('custom_item_reserved_status', 0)
+                    frappe.validated = false;
+                    frappe.throw(__("Please select a reservation status."))
+                    return false;
+                } else if (itemsToReserved.length == 0 && custom_reference_invoice_exist) {
+    
+                    cur_frm.toggle_reqd('custom_item_reserved_status', 0)
+    
+    
+    
+                }
+    
+                if (cur_frm.doc.custom_reference_invoice != '') {
+    
+                    frappe.db.get_doc('POS Invoice', cur_frm.doc.custom_reference_invoice).then(r => {
+    
+    
+                        console.log(":: POS INVOICE ::", r)
+    
+                        if (r.custom_parent_invoice != null) {
+                            cur_frm.doc.custom_parent_invoice = r.custom_parent_invoice
+                        } else {
+                            cur_frm.doc.custom_parent_invoice = cur_frm.doc.custom_reference_invoice
+                        }
+    
+                        cur_frm.doc.custom_is_deposit = r.custom_is_deposit;
+                        cur_frm.doc.custom_base_amount = r.custom_base_amount;
+                        let newOutstandingAmount = r.custom_invoices_outstanding_amount_ - (cur_frm.doc.total * -1)
+                        cur_frm.doc.custom_invoices_outstanding_amount_ = newOutstandingAmount
+                        //_remark = `Amount of ${cur_frm.doc.total} received against the Invoice ${cur_frm.doc.custom_reference_invoice} (${r.custom_invoices_outstanding_amount_}), with new outstanding balance of EUR ${newOutstandingAmount}.`
+    
+                        if (newOutstandingAmount === 0) {
+    
+    
+                            frappe.db.get_doc('Michalis Diamond Gallery Settings').then(res => {
+                                cur_frm.doc.custom_is_settlement_invoice = 1;
+    
+                                msgprint('Create sales invoice for that product.')
+    
+                                let customer = cur_frm.doc.customer;
+                                let items_to_update_stock = [];
+                                let related_invoices = [];
+                                console.log('Create Sales invoice ...')
+                                console.log('⚙️ default_reservation_warehouse ', res['default_reservation_warehouse'])
+    
+                                frappe.call({
+                                    method: "cpherbalist.pos.get_child_invoices", //dotted path to server method
+                                    args: {
+                                        filters: { parent_invoice: `${cur_frm.doc.custom_parent_invoice}` }
+                                    },
+                                    success: function (r) { },
+                                    error: function (r) { },
+                                    callback: function (r) {
+                                        console.log(' -- [callback] RELATED INVOICES --', r.message)
+                                        window.related_invoices = r.message
+    
+                                        if (window.related_invoices.length >= 1) {
+    
+    
+                                            get_parent_invoice_obj(cur_frm.doc.custom_parent_invoice).then(pobj => {
+    
+                                                if (r != null) {
+    
+                                                    let items = get_items_from_parent_invoice(pobj)
+    
+                                                    console.log('    PARENT INVOICE ', pobj)
+                                                    console.log('       INVOICE OBJECT ', items)
+    
+    
+    
+                                                    frappe.call({
+                                                        method: "cpherbalist.pos.create_stock_entry_against_parent_invoice_reserved_items",
+                                                        args: {
+                                                            filters: {
+                                                                parent_invoice: pobj.name
+                                                            }
+                                                        },
+                                                        callback: function (r) {
+                                                            console.log(r)
+                                                        }
+                                                    });
+                                                }
+                                            })
+                                        }
+                                    }
+                                })
+                            });
+                        }
+                        //msgprint(`Deposit against the amount: ${baseAmount}\nOutstanding amount: ${outstandingAmount}`);
+                    })
+                }
+                else // in case that we do not have any item selected ...
+                {
+                    // set custom_items_to_deposit
+    
+                    // item
+                    // item_name
+                    // qty 
+                    // rate
+    
+                    console.log(" -- ITEMS TO RESERVED -- ", itemsToReserved)
+    
+                    // Loop through the items and add them to the child table
+                    itemsToReserved.forEach(function (item) {
+                        var row = cur_frm.add_child('custom_items_to_deposit');
+                        row.item = item.item;
+                        row.item_name = item.item_name;
+                        row.qty = item.qty;
+                        row.rate = item.rate;
+                        row.total_amount = item.qty * item.rate
+    
+    
+                        // Refresh the form to reflect the changes
+                        cur_frm.refresh_field('custom_items_to_deposit');
+    
+                        frappe.db.get_value("User", frappe.session.user, "warehouse").then(response => {
+    
+                            console.log(' ^^ POS PROFILE ^^', response.message.warehouse);
+                            _from_warehouse = response.message.warehouse;
+    
+                        })
+    
+    
+                        get_settings('default_reservation_warehouse').then(settingValue => {
+    
+                            let _from_warehouse = settingValue;
+                            let _to_warehouse = undefined;
+    
+                            console.log(settingValue);
+    
+                            get_pos_profile_warehouse(cur_pos.pos_profile).then(ppw => {
+    
+                                _to_warehouse = ppw;
+    
+                                if ((_from_warehouse != '' || _from_warehouse != undefined || _from_warehouse === null) &&
+                                    ((_to_warehouse != '' || _to_warehouse != undefined || _to_warehouse === null))) {
+    
+                                    let _custom_item_given = 0;
+                                    let _custom_item_hold = 1;
+                                    let _custom_item_reserved_status = cur_frm.doc.custom_item_reserved_status
+    
+                                    try {
+                                        if (_custom_item_reserved_status != null) {
+    
+                                            if (_custom_item_reserved_status.includes('Hold') || _custom_item_reserved_status.includes('Undelivered')) { }
+    
+                                            if (_custom_item_reserved_status.includes('Given') || _custom_item_reserved_status.includes('Released') || _custom_item_reserved_status.includes('Delivered')) {
+                                                _custom_item_given = 1;
+                                                _custom_item_hold = 0;
+                                            }
+    
+                                        } else {
+                                            return;
+    
+                                        }
+                                    } catch (error) {
+    
+                                    }
+    
+    
+    
+    
+    
+                                    // move items out 
+                                    frappe.call({
+                                        // method: "erpnext.stock.doctype.stock_entry.stock_entry_utils.make_stock_entry",
+                                        method: "cpherbalist.mdg_stock_entry_utils.make_stock_entry",
+    
+                                        args: {
+                                            item_code: row.item,
+                                            qty: 1, //qty_to_move,
+                                            from_warehouse: _to_warehouse,
+                                            to_warehouse: _from_warehouse,
+                                            company: frappe.defaults.get_user_defaults("Company")[0],
+                                            custom_item_given: _custom_item_given,
+                                            custom_item_hold: _custom_item_hold,
+                                        },
+                                        callback: (r) => {
+    
+                                        },
+                                    }).then(r => {
+                                        frm.refresh();
+                                    });
+                                }
+    
+                            })
+                        }).catch(error => {
+                            console.error('Error:', error);
+                        });
+                    });
+    
+    
+                    // cur_frm.doc.custom_item_reserved_status
+                    // // create sales invoice against the reserved warehouse 
+    
+                    cur_frm.doc.custom_is_deposit = 1;
+                    cur_frm.doc.custom_base_amount = baseAmount;
+                    let outstandingAmount = cur_frm.doc.custom_invoices_outstanding_amount_ - (baseAmount - cur_frm.doc.total)
+                    cur_frm.doc.custom_invoices_outstanding_amount_ = outstandingAmount
+                }
+    
+            }
+    
+            // check for seller account 
+            let _sellerAccount = JSON.parse(localStorage.getItem('seller_profile')).value
+    
+            if (_sellerAccount) {
+                cur_frm.doc.custom_seller_account = _sellerAccount
+            }
+        }
+
+
+
     },
 
+    
     custom_reference_invoice: function (frm) {
 
         if (cur_frm.doc.items.some(i => i.item_name === "DEPOSIT")) {
@@ -480,327 +885,6 @@ frappe.ui.form.on('POS Invoice', {
         }
 
     },
-
-    before_submit: function (frm) {
-
-        let custom_credit_forward_amount_ = frm.doc.custom_credit_forward_amount_;
-        let _couponCode = get_applied_coupons();
-        let last_coupon = _couponCode[_couponCode.length - 1];
-
-        if (_couponCode.length >= 1) {
-
-            if (custom_credit_forward_amount_ > 0 && _couponCode.length >= 2) {
-
-                _couponCode.forEach((c) => {
-
-                    frappe.call({
-                        method: "cpherbalist.pos.redeem_coupon",
-                        args: {
-                            coupon_code: c,
-                        }
-                    }).then((result) => {
-
-                        frappe.call({
-                            method: "cpherbalist.pos.update_coupon_balance",
-                            args: {
-                                coupon_code: c,
-                                balance: 0
-                            }
-                        })
-                            .then((result) => {
-
-                                if (c === last_coupon) {
-                                    frappe.call({
-                                        // reactivate_coupon
-                                        // update_coupon_balance
-                                        method: "cpherbalist.pos.reactivate_coupon",
-                                        args: {
-                                            coupon_code: last_coupon,
-                                            balance: custom_credit_forward_amount_
-                                        }
-                                    })
-                                        .then((result) => { })
-                                        .catch((err) => { });
-                                }
-                            })
-                            .catch((err) => { });
-
-                    }).catch((err) => { });
-                })
-            } else {
-                if (custom_credit_forward_amount_ > 0) {
-                    frappe.call({
-                        method: "cpherbalist.pos.update_coupon_balance",
-                        args: {
-                            coupon_code: _couponCode[0],
-                            balance: custom_credit_forward_amount_
-                        }
-                    })
-                        .then((result) => { })
-                        .catch((err) => { });
-
-                } else {
-                    frappe.call({
-                        method: "cpherbalist.pos.redeem_coupon",
-                        args: {
-                            coupon_code: _couponCode[0],
-                        }
-                    }).then((result) => {
-
-                        frappe.call({
-                            method: "cpherbalist.pos.update_coupon_balance",
-                            args: {
-                                coupon_code: _couponCode[0],
-                                balance: custom_credit_forward_amount_
-                            }
-                        })
-                            .then((result) => { })
-                            .catch((err) => { });
-
-                    }).catch((err) => { });
-
-                }
-            }
-        }
-
-        if (isDeposit) {
-            let paidCreditedInvoice = cur_frm.doc.custom_reference_invoice != '';
-            let custom_reference_invoice_exist = cur_frm.custom_reference_invoice != null || cur_frm.custom_reference_invoice != '' || cur_frm.custom_reference_invoice != undefined;
-
-
-            if (paidCreditedInvoice && (itemsToReserved.length > 1)) {
-                frappe.validated = false;
-                frappe.throw(__("You can not create transaction contain reference invoice and product."))
-                return false;
-            } else if (!paidCreditedInvoice && (itemsToReserved.length === 0)) {
-                frappe.validated = false;
-                frappe.throw(__("Please select either a product or reference invoice."))
-                return false;
-            } else if (itemsToReserved.length >= 1 && (cur_frm.doc.custom_item_reserved_status === null || cur_frm.doc.custom_item_reserved_status == '' || cur_frm.doc.custom_item_reserved_status === undefined)
-                && (cur_frm.custom_reference_invoice != null || cur_frm.custom_reference_invoice != '' || cur_frm.custom_reference_invoice != undefined)) {
-                cur_frm.toggle_reqd('custom_item_reserved_status', 0)
-                frappe.validated = false;
-                frappe.throw(__("Please select a reservation status."))
-                return false;
-            } else if (itemsToReserved.length == 0 && custom_reference_invoice_exist) {
-
-                cur_frm.toggle_reqd('custom_item_reserved_status', 0)
-
-
-
-            }
-
-            // if (itemsToReserved.length === 0) {
-            //     $('input[data-fieldname="custom_item_to_reserved"]').focus()
-            //     msgprint("Item to reserve is required !");
-            //     frappe.validated = false;
-            //     frappe.throw(__("Not Saved"))
-            //     return false; 
-            // } 
-
-            // check if we have to link invoice 
-
-            if (cur_frm.doc.custom_reference_invoice != '') {
-
-                frappe.db.get_doc('POS Invoice', cur_frm.doc.custom_reference_invoice).then(r => {
-
-
-                    console.log(":: POS INVOICE ::", r)
-
-                    if (r.custom_parent_invoice != null) {
-                        cur_frm.doc.custom_parent_invoice = r.custom_parent_invoice
-                    } else {
-                        cur_frm.doc.custom_parent_invoice = cur_frm.doc.custom_reference_invoice
-                    }
-
-                    cur_frm.doc.custom_is_deposit = r.custom_is_deposit;
-                    cur_frm.doc.custom_base_amount = r.custom_base_amount;
-                    let newOutstandingAmount = r.custom_invoices_outstanding_amount_ - (cur_frm.doc.total * -1)
-                    cur_frm.doc.custom_invoices_outstanding_amount_ = newOutstandingAmount
-                    //_remark = `Amount of ${cur_frm.doc.total} received against the Invoice ${cur_frm.doc.custom_reference_invoice} (${r.custom_invoices_outstanding_amount_}), with new outstanding balance of EUR ${newOutstandingAmount}.`
-
-                    if (newOutstandingAmount === 0) {
-
-
-                        frappe.db.get_doc('Michalis Diamond Gallery Settings').then(res => {
-                            cur_frm.doc.custom_is_settlement_invoice = 1;
-
-                            msgprint('Create sales invoice for that product.')
-
-                            let customer = cur_frm.doc.customer;
-                            let items_to_update_stock = [];
-                            let related_invoices = [];
-                            console.log('Create Sales invoice ...')
-                            console.log('⚙️ default_reservation_warehouse ', res['default_reservation_warehouse'])
-
-                            frappe.call({
-                                method: "cpherbalist.pos.get_child_invoices", //dotted path to server method
-                                args: {
-                                    filters: { parent_invoice: `${cur_frm.doc.custom_parent_invoice}` }
-                                },
-                                success: function (r) { },
-                                error: function (r) { },
-                                callback: function (r) {
-                                    console.log(' -- [callback] RELATED INVOICES --', r.message)
-                                    window.related_invoices = r.message
-
-                                    if (window.related_invoices.length >= 1) {
-
-
-                                        get_parent_invoice_obj(cur_frm.doc.custom_parent_invoice).then(pobj => {
-
-                                            if (r != null) {
-
-                                                let items = get_items_from_parent_invoice(pobj)
-
-                                                console.log('    PARENT INVOICE ', pobj)
-                                                console.log('       INVOICE OBJECT ', items)
-
-
-
-                                                frappe.call({
-                                                    method: "cpherbalist.pos.create_stock_entry_against_parent_invoice_reserved_items",
-                                                    args: {
-                                                        filters: {
-                                                            parent_invoice: pobj.name
-                                                        }
-                                                    },
-                                                    callback: function (r) {
-                                                        console.log(r)
-                                                    }
-                                                });
-                                            }
-                                        })
-                                    }
-                                }
-                            })
-                        });
-                    }
-                    //msgprint(`Deposit against the amount: ${baseAmount}\nOutstanding amount: ${outstandingAmount}`);
-                })
-            }
-            else // in case that we do not have any item selected ...
-            {
-                // set custom_items_to_deposit
-
-                // item
-                // item_name
-                // qty 
-                // rate
-
-                console.log(" -- ITEMS TO RESERVED -- ", itemsToReserved)
-
-                // Loop through the items and add them to the child table
-                itemsToReserved.forEach(function (item) {
-                    var row = cur_frm.add_child('custom_items_to_deposit');
-                    row.item = item.item;
-                    row.item_name = item.item_name;
-                    row.qty = item.qty;
-                    row.rate = item.rate;
-                    row.total_amount = item.qty * item.rate
-
-
-                    // Refresh the form to reflect the changes
-                    cur_frm.refresh_field('custom_items_to_deposit');
-
-                    frappe.db.get_value("User", frappe.session.user, "warehouse").then(response => {
-
-                        console.log(' ^^ POS PROFILE ^^', response.message.warehouse);
-                        _from_warehouse = response.message.warehouse;
-
-                    })
-
-
-                    get_settings('default_reservation_warehouse').then(settingValue => {
-
-                        let _from_warehouse = settingValue;
-                        let _to_warehouse = undefined;
-
-                        console.log(settingValue);
-
-                        get_pos_profile_warehouse(cur_pos.pos_profile).then(ppw => {
-
-                            _to_warehouse = ppw;
-
-                            if ((_from_warehouse != '' || _from_warehouse != undefined || _from_warehouse === null) &&
-                                ((_to_warehouse != '' || _to_warehouse != undefined || _to_warehouse === null))) {
-
-                                let _custom_item_given = 0;
-                                let _custom_item_hold = 1;
-                                let _custom_item_reserved_status = cur_frm.doc.custom_item_reserved_status
-
-                                try {
-                                    if (_custom_item_reserved_status != null) {
-
-                                        if (_custom_item_reserved_status.includes('Hold') || _custom_item_reserved_status.includes('Undelivered')) { }
-
-                                        if (_custom_item_reserved_status.includes('Given') || _custom_item_reserved_status.includes('Released') || _custom_item_reserved_status.includes('Delivered')) {
-                                            _custom_item_given = 1;
-                                            _custom_item_hold = 0;
-                                        }
-
-                                    } else {
-                                        return;
-
-                                    }
-                                } catch (error) {
-
-                                }
-
-
-
-
-
-                                // move items out 
-                                frappe.call({
-                                    // method: "erpnext.stock.doctype.stock_entry.stock_entry_utils.make_stock_entry",
-                                    method: "cpherbalist.mdg_stock_entry_utils.make_stock_entry",
-
-                                    args: {
-                                        item_code: row.item,
-                                        qty: 1, //qty_to_move,
-                                        from_warehouse: _to_warehouse,
-                                        to_warehouse: _from_warehouse,
-                                        company: frappe.defaults.get_user_defaults("Company")[0],
-                                        custom_item_given: _custom_item_given,
-                                        custom_item_hold: _custom_item_hold,
-                                    },
-                                    callback: (r) => {
-
-                                    },
-                                }).then(r => {
-                                    frm.refresh();
-                                });
-                            }
-
-                        })
-                    }).catch(error => {
-                        console.error('Error:', error);
-                    });
-                });
-
-
-                // cur_frm.doc.custom_item_reserved_status
-                // // create sales invoice against the reserved warehouse 
-
-                cur_frm.doc.custom_is_deposit = 1;
-                cur_frm.doc.custom_base_amount = baseAmount;
-                let outstandingAmount = cur_frm.doc.custom_invoices_outstanding_amount_ - (baseAmount - cur_frm.doc.total)
-                cur_frm.doc.custom_invoices_outstanding_amount_ = outstandingAmount
-            }
-
-        }
-
-
-        // check for seller account 
-        let _sellerAccount = JSON.parse(localStorage.getItem('seller_profile')).value
-
-        if (_sellerAccount) {
-            cur_frm.doc.custom_seller_account = _sellerAccount
-        }
-
-    },
-
     onload: function (frm) {
 
         console.log(window.location.href)
@@ -812,8 +896,6 @@ frappe.ui.form.on('POS Invoice', {
         button.addEventListener("click", (event) => {
             console.log(" :: 🟤 CLICK ON CHECKOUT ::")
 
-            addCustomStyle()
-
             if (typeof $.fn.select2 !== 'undefined') {
                 console.log('Select2 is loaded');
             } else {
@@ -822,8 +904,8 @@ frappe.ui.form.on('POS Invoice', {
                     frappe.require("https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/dist/sweetalert2.all.min.js")
                     frappe.require("https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/dist/sweetalert2.min.css")
 
-                    frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css")
-                    frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
+                    // frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css")
+                    // frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
                 }, 0);
 
 
@@ -869,20 +951,23 @@ frappe.ui.form.on('POS Invoice', {
         });
     },
 
+    // TODO: SYNC
     custom_apply_coupon: function (frm) {
 
-        // custom_coupon_code
-        let couponCode = document.querySelector('textarea[data-fieldname="custom_coupon_code"]').value
-        const lines = couponCode.split(/\r?\n/).filter(line => line.trim() !== '');
-        //var concatenatedString = lines.join(",");
+        let apply_pricing_rule = () => {
 
-        couponCode = get_applied_coupons();
+
+        }
+
+
+        const today = new Date();
+
+        let couponCode = get_applied_coupons();
         console.log('get_applied_coupons', couponCode);
 
         let concatenatedString = couponCode.map(line => line.trim()).join(",");
         console.log('coupons', concatenatedString);
         let cc, prc, couponCodes;
-
 
         if (couponCode.length >= 2) // we have to call apply coupons more than one's
         {
@@ -905,15 +990,15 @@ frappe.ui.form.on('POS Invoice', {
                     add_remark(result.message.message);
 
                     console.log("Total amount from all coupons: ", total_discount);
-
                     console.log('🧾 POS: ', cur_pos);
 
                     $(`.mode-of-payment[data-mode="voucher"]`)[0].click()
+                    document.querySelector('input[placeholder="Enter Voucher amount."]').disabled = false;
                     cur_pos.payment.selected_mode.set_value(total_discount)
+                    document.querySelector('input[placeholder="Enter Voucher amount."]').disabled = true;
 
                     //apply_discount(cur_frm, total_discount, couponCode);
                     show_remove_coupons_button();
-
                     readjustPaymentMethod(total_discount);
 
 
@@ -930,21 +1015,29 @@ frappe.ui.form.on('POS Invoice', {
             frappe.call({
                 method: "cpherbalist.pos.get_coupon",
                 args: {
-                    coupon_code: couponCode[0]
+                    coupon_code: couponCode[0],
+                    b_by_name: true
                 }
             }).then(response => {
-
                 if (response.message) {
 
                     cc = response.message;
                     console.log("Coupon details:", cc);
 
-                    const coupon_used_msg = __("Coupon with code <b>{0}</b> has already been used.", [couponCode]);
+                    const dateObj = new Date(cc.valid_upto);
+
+                    // Check If Is Valid
+                    if (dateObj < today) {
+                        const error_msg = __("Coupon with code <b>{0}</b> is expired or is not valid.", [couponCode,]);
+                        frappe.throw(error_msg)
+                        return;
+                    }
+                        
                     if (cc.used >= 1) {
+                        const coupon_used_msg = __("Coupon with code <b>{0}</b> has already been used.", [couponCode]);
                         frappe.throw(coupon_used_msg)
                         return;
                     }
-
 
                     if (cc.pricing_rule != null) {
 
@@ -979,13 +1072,12 @@ frappe.ui.form.on('POS Invoice', {
 
                         })
                     }
-
-                    else {
-                        // in case that we do not have a price rule
-
-
-
+                    // PRICING RULE DO NOT EXIST
+                    else 
+                    {
+                        
                         let applicableAmount = cc.custom_amount;
+
                         console.log(applicableAmount);
                         show_remove_coupons_button();
                         //apply_discount(cur_frm, applicableAmount, couponCode);
@@ -1006,19 +1098,13 @@ frappe.ui.form.on('POS Invoice', {
                             }
                         } catch (e) {
                             card_amount = 0;
-                            console.log(e); // Logs the error
                         }
-
 
                         let remaining_amount = total_amount - coupon_amount;
 
-
-
-
-
-
                         $(`.mode-of-payment[data-mode="cash"]`)[0].click()
                         cur_pos.payment.selected_mode.set_value(remaining_amount)
+
 
                         $(`.mode-of-payment[data-mode="voucher"]`)[0].click()
                         cur_pos.payment.selected_mode.set_value(applicableAmount)
@@ -1037,23 +1123,19 @@ frappe.ui.form.on('POS Invoice', {
 
                             $(`.mode-of-payment[data-mode="voucher"]`)[0].click()
                             cur_pos.payment.selected_mode.set_value(total_amount)
-
                         }
+
+
+
 
                     }
 
-
-
                 } else {
-                    const error_msg = __("Coupon with code <b>{0}</b> is expired or is not valid.", [
-                        couponCode,
-                    ]);
+                    const error_msg = __("Coupon with code <b>{0}</b> is expired or is not valid.", [couponCode,]);
                     frappe.throw(error_msg)
                 }
             }).catch(error => {
-                const error_msg = __("Coupon with code <b>{0}</b> is expired or is not valid.", [
-                    couponCode,
-                ]);
+                const error_msg = __("Coupon with code <b>{0}</b> is expired or is not valid.", [couponCode,]);
                 frappe.throw(error)
                 console.error(error)
             });
@@ -1062,36 +1144,7 @@ frappe.ui.form.on('POS Invoice', {
 
     },
 
-    refresh: function (frm) {
-    //     try {
-    //         console.log(' :: RELOAD ::')
-            
-    //         frappe.call({
-    //             method: 'cpherbalist.material_request_custom.get_warehouse_items_select2',
-    //             args: {
-    //                 filters: {
-    //                     warehouse: cur_frm.doc.set_warehouse
-    //                 }
-    //             },
-    //         }).then(response => {
-
-    //             if (response.message) {
-    //                 // Handle the response (e.g., display items)
-    //                 console.log(response.message);  // This will log the list of items returned from the server
-    //                 console.log(":: response.message.results ::", response.message.results);
-
-    //                 var data1 = $.map(response.message.results, function (obj) {
-    //                     obj.id = obj.id || obj.pk; // replace pk with your identifier
-    //                     return obj;
-    //                 });
-    //                 checkElementExistence('input[data-fieldname="custom_item_to_reserved"]', data1);
-    //             }
-    //         });
-    //     } catch (error) {
-
-    //     }
-    // }
-    }
+    refresh: function (frm) { }
 });
 
 
@@ -1126,7 +1179,7 @@ function checkElementExistence(s_element, a_data) {
                 data: a_data,
             });
 
-            init_select2_events();
+            // init_select2_events();
 
             clearInterval(intervalId);
         } else if (retryCount >= 5) {

@@ -15,7 +15,8 @@ from frappe.utils import (
 	nowdate,
 	parse_json,
 	time_diff_in_hours,
-    now_datetime
+    now_datetime,
+    today
 )
 
 
@@ -36,33 +37,82 @@ from erpnext.utilities.transaction_base import validate_uom_is_integer
 
 def __init__(self):
     self.domain = frappe.request.host
+
+
+# TODO: Insert into live enviroment
+@frappe.whitelist()
+def get_user_info(email):
+    user = frappe.get_doc("User", email)
+    return {
+        "full_name": user.full_name,
+        "mobile_no": user.mobile_no,
+        "roles": [r.role for r in user.roles]
+    }
     
     
+        
+@frappe.whitelist()
+def get_coupon_data(coupon_code):
+    docname = frappe.db.get_value("Coupon Code", {"coupon_code": coupon_code})
+    if not docname:
+        frappe.throw(_("Invalid coupon code"))
+
+    doc = frappe.get_doc("Coupon Code", docname)
+    return doc 
+
+@frappe.whitelist()
+def has_opening_pos_entry(pos_profile_name, user=None, date=None):
+    """
+    Check if an opening POS entry exists for the given POS profile (and optional user/date).
+    
+    :param pos_profile_name: Name of the POS Profile
+    :param user: (Optional) User linked to the POS Opening Entry
+    :param date: (Optional) Posting date to check, defaults to today
+    :return: True if entry exists, else False
+    """
+    filters = {
+        "pos_profile": pos_profile_name,
+        "docstatus": 1  # Submitted
+    }
+
+    if user:
+        filters["user"] = user
+
+    if date:
+        filters["posting_date"] = date
+    else:
+        filters["posting_date"] = today()
+
+    entries = frappe.get_list("POS Opening Entry", filters=filters, limit=1)
+
+    return bool(entries)
+
+
 @frappe.whitelist()
 def create_pos_coupon_sales_order(item_code, value, customer, coupon_code ):
     try:
-        
-        value = float(value) 
-        
+        frappe.log_error(f"⚠️ coupon_code ", type(value))
 
+        # value = float(value) 
+        
         pos_invoice = frappe.get_doc({
             "doctype": "POS Invoice",
             "is_pos": 1,
             "update_stock": 1,
             "pos_profile": "Ithomis",
             "customer": customer,
-            "custom_remarks": f"Coupon Code: {coupon_code}, Value: {value}",
+            "custom_remarks": f"Coupon Code: {coupon_code}, Value: {str(value)}",
             "items": [
                 {
                     "item_code": item_code,
                     "qty": 1,
-                    "rate": value
+                    "rate": float(value) 
                 }
             ],
             "payments": [
                 {
                     "mode_of_payment": "Cash",  # Adjust based on your POS Profile
-                    "amount": value
+                    "amount": float(value) 
                 }
             ]
         })
@@ -115,9 +165,19 @@ def submit_matrial_request(doc, method=None):
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "❌ Auto Submit Error")
         
+
+
+
+
 @frappe.whitelist()
 def wc_coupon_sync(doc, method=None): 
-    frappe.log_error("✅ submit_wo success", f"doc: {doc}")
+    frappe.log_error("✅ wc_coupon_sync success", f"doc: {doc}")
+    frappe.log_error("✅ wc_coupon_sync TODO SYNC", f"doc: {doc}")
+
+
+
+
+
 
 @frappe.whitelist()
 def auto_create_stock_entry(item_code):
@@ -151,6 +211,7 @@ def submit_wo(doc, method=None):
 
     try:
         doc.submit()
+        # frappe.db.commit()
         frappe.log_error("✅ submit_wo success", f"Work Order: {doc.name}")
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "❌ Auto Submit Error")
@@ -200,9 +261,7 @@ def on_wo_submitted(doc, method=None):
         return f"✅ Work Order {wo.name} started with Stock Entry"
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "❌ Error in auto-submit/start")
-        
-        
-        
+               
 @frappe.whitelist()
 def redirect_to_v1(set_warehouse,the_item):
     from frappe.auth import CookieManager, LoginManager

@@ -8,7 +8,7 @@ frappe.provide("erpnext.PointOfSale");
 
 // Function to handle URL changes
 function onUrlChange() {
-    console.log("The page URL changed to:", window.location.href);
+    //console.log("The page URL changed to:", window.location.href);
 }
 
 // Listen for the popstate event
@@ -34,9 +34,51 @@ window.addEventListener('popstate', onUrlChange);
 
 // --------------------------------
 
+// $(document).ready( ()=> {
+// setTimeout(() => {
+
+//     console.log('💥')
 
 
+//         const params = new URLSearchParams(window.location.search);
+//         const coupon = params.get("evoucher");
+    
+//         // Map coupon codes to item codes
+//         const couponToItemMap = {
+//             "SUMMER50": "DISCOUNT-SUMMER50",
+//             "WELCOME10": "DISCOUNT-WELCOME10"
+//         };
+    
+    
+//         if (window.location.pathname.includes("/point-of-sale") && coupon) {
+    
+//             frappe.call({
+//                 method: "cpherbalist.api.get_coupon_data",  // Adjust this to your app path
+//                 args: {
+//                     coupon_code: coupon
+//                 },
+//                 callback: function (r) {
 
+//                     console.log(`Coupon "${coupon}`);
+//                     console.log('💥')
+
+//                     if (!r.exc && r.message) {
+//                         const coupon = r.message;
+//                         console.log("Coupon Data:", coupon);
+                        
+//                         // e.g., add item to POS:
+//                         window.pos.app.$store.dispatch("pos/add_item_to_cart", {
+//                             item_code: coupon.item_code,
+//                             qty: 1
+//                         });
+//                     } else {
+//                         frappe.msgprint("Invalid coupon code");
+//                     }
+//                 }
+//             });
+//         }
+// }, 3500);
+// } )
 
 
 frappe.require('point-of-sale.bundle.js', function () {
@@ -49,9 +91,8 @@ frappe.require('point-of-sale.bundle.js', function () {
 
     erpnext.PointOfSale.Controller = class MyPosController extends erpnext.PointOfSale.Controller {
         constructor(wrapper) {
+            
             super(wrapper);
-
-
 
             this.get_opening_entry().then((res) => {
 
@@ -70,8 +111,8 @@ frappe.require('point-of-sale.bundle.js', function () {
                     frappe.require("https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/dist/sweetalert2.all.min.js")
                     frappe.require("https://cdn.jsdelivr.net/npm/sweetalert2@11.17.2/dist/sweetalert2.min.css")
 
-                    frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css")
-                    frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
+                    // frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css")
+                    // frappe.require("https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js")
 
                     frappe.require("https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.1.2/lazysizes.min.js")
 
@@ -224,6 +265,7 @@ frappe.require('point-of-sale.bundle.js', function () {
         }
 
         create_opening_voucher() {
+
             const me = this;
             const table_fields = [
                 {
@@ -284,21 +326,22 @@ frappe.require('point-of-sale.bundle.js', function () {
                         options: "POS Profile",
                         fieldname: "pos_profile",
                         reqd: 1,
-                        get_query: () => pos_profile_query(),
+                        //get_query: () => pos_profile_query(),
                         onchange: () => fetch_pos_payment_methods(),
-                        read_only: 1
+                        read_only: 0
                     },
                     {
                         fieldname: "balance_details",
                         fieldtype: "Table",
                         label: __("Opening Balance Details"),
-                        cannot_add_rows: false,
+                        cannot_add_rows: true,
                         in_place_edit: true,
                         reqd: 1,
                         data: [],
                         fields: table_fields,
                     },
                 ],
+
                 primary_action: async function ({ company, pos_profile, balance_details }) {
                     if (!balance_details.length) {
                         frappe.show_alert({
@@ -326,7 +369,7 @@ frappe.require('point-of-sale.bundle.js', function () {
 
             frappe.call({
                 method: "cpherbalist.pos_automated_actions.get_user_pos_profile",
-                args: { "user": frappe.session.user },  // Pass any arguments if required (empty in this case)
+                args: { "user": frappe.session.user }, 
                 callback: function (response) {
 
                     if (dialog && response.message) {
@@ -376,128 +419,46 @@ frappe.require('point-of-sale.bundle.js', function () {
         }
 
         async on_cart_update(args) {
-
             frappe.dom.freeze();
-            let __ = false;
-
-
-
-
             if (this.frm.doc.set_warehouse != this.settings.warehouse)
                 this.frm.doc.set_warehouse = this.settings.warehouse;
             let item_row = undefined;
-
             try {
                 let { field, value, item } = args;
                 item_row = this.get_item_from_frm(item);
                 const item_row_exists = !$.isEmptyObject(item_row);
-
-                console.log('item_code [on_cart_update]', args.item.item_code)
-
-                // let selected_item = this.get_item(args.item.item_code);
-
-                let _ = await frappe.db.get_doc('Item', args.item.item_code).then((value) => {
-                    console.log('🟠 selected_item', value);
-
-
-
-                    if (value.custom_is_virtual && value.custom_autocheckout) {
-
-                        setTimeout(() => {
-                            document.querySelector('.checkout-btn').click()
-                        }, 1500);
-                    }
-
-
-                    if (cur_frm.doc.total_qty == 0) {
-
-                        if (value.name === 'Deposit') {
-                            window.is_deposit = true;
-                            return true;
-                        }
-
-                        if (value.custom_is_cp) {
-                            window.is_cp = true;
-                            return true;
-                        }
-                    }
-
-                    if (cur_frm.doc.total_qty === 1) {
-
-
-                        if (window.is_cp) {
-
-                            if (window.is_deposit) {
-                                return false;
-                            }
-
-                            if (value.custom_is_cp) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }
-
-                        if (window.is_deposit) {
-
-                            if (value.name != 'Deposit') {
-                                return false;
-                            }
-
-                            if (value.name === 'Deposit') {
-
-                                if (allow_change_deposit_rate && cur_frm.doc.total_qty === 1) {
-                                    return true;
-                                } else {
-                                    return false;
-                                }
-
-                            }
-                        }
-                    }
-                    return true;
-
-                    // ==========================================================================================
-                })
-                    .catch((e) => {
-                        console.error(e.message); // "Item alert raised, stopping further execution" or other errors
-                    })
-
-
-                if (!_ && window.is_deposit) {
-                    return this.raise_item_deposit_alert()
-                }
-
-                //console.log(_)
-
-                if (!_ && window.is_cp) {
-                    return this.raise_item_cp_alert();
-                }
-
-
+    
                 const from_selector = field === "qty" && value === "+1";
                 if (from_selector) value = flt(item_row.qty) + flt(value);
-
+    
                 if (item_row_exists) {
                     if (field === "qty") value = flt(value);
-
+    
                     if (["qty", "conversion_factor"].includes(field) && value > 0 && !this.allow_negative_stock) {
                         const qty_needed =
                             field === "qty" ? value * item_row.conversion_factor : item_row.qty * value;
                         await this.check_stock_availability(item_row, qty_needed, this.frm.doc.set_warehouse);
                     }
-
+    
                     if (this.is_current_item_being_edited(item_row) || from_selector) {
                         await frappe.model.set_value(item_row.doctype, item_row.name, field, value);
+                        if (item.serial_no && from_selector) {
+                            await frappe.model.set_value(
+                                item_row.doctype,
+                                item_row.name,
+                                "serial_no",
+                                item_row.serial_no + `\n${item.serial_no}`
+                            );
+                        }
                         this.update_cart_html(item_row);
                     }
                 } else {
                     if (!this.frm.doc.customer) return this.raise_customer_selection_alert();
-
+    
                     const { item_code, batch_no, serial_no, rate, uom, stock_uom } = item;
-
+    
                     if (!item_code) return;
-
+    
                     if (rate == undefined || rate == 0) {
                         frappe.show_alert({
                             message: __("Price is not set for the item."),
@@ -507,44 +468,211 @@ frappe.require('point-of-sale.bundle.js', function () {
                         return;
                     }
                     const new_item = { item_code, batch_no, rate, uom, [field]: value, stock_uom };
-
+    
                     if (serial_no) {
                         await this.check_serial_no_availablilty(item_code, this.frm.doc.set_warehouse, serial_no);
                         new_item["serial_no"] = serial_no;
                     }
-
+    
                     new_item["use_serial_batch_fields"] = 1;
                     if (field === "serial_no") new_item["qty"] = value.split(`\n`).length || 0;
-
+    
                     item_row = this.frm.add_child("items", new_item);
-
+    
                     if (field === "qty" && value !== 0 && !this.allow_negative_stock) {
                         const qty_needed = value * item_row.conversion_factor;
                         await this.check_stock_availability(item_row, qty_needed, this.frm.doc.set_warehouse);
                     }
-
+    
                     await this.trigger_new_item_events(item_row);
-
+    
                     this.update_cart_html(item_row);
-
+    
                     if (this.item_details.$component.is(":visible")) this.edit_item_details_of(item_row);
-
+    
                     if (
                         this.check_serial_batch_selection_needed(item_row) &&
                         !this.item_details.$component.is(":visible")
                     )
                         this.edit_item_details_of(item_row);
                 }
-
-
             } catch (error) {
                 console.log(error);
             } finally {
                 frappe.dom.unfreeze();
                 return item_row; // eslint-disable-line no-unsafe-finally
             }
-
         }
+
+
+        // async on_cart_update(args) {
+
+        //     frappe.dom.freeze();
+        //     let __ = false;
+
+        //     if (this.frm.doc.set_warehouse != this.settings.warehouse)
+        //         this.frm.doc.set_warehouse = this.settings.warehouse;
+        //     let item_row = undefined;
+
+        //     try {
+        //         let { field, value, item } = args;
+        //         item_row = this.get_item_from_frm(item);
+        //         const item_row_exists = !$.isEmptyObject(item_row);
+
+        //         console.log('item_code [on_cart_update]', args.item.item_code)
+
+        //         // let selected_item = this.get_item(args.item.item_code);
+
+        //         let _ = await frappe.db.get_doc('Item', args.item.item_code).then((value) => {
+
+        //             console.log('🟠 selected_item', value);
+
+
+
+        //             if (value.custom_is_virtual && value.custom_autocheckout) {
+
+        //                 setTimeout(() => {
+        //                     document.querySelector('.checkout-btn').click()
+        //                 }, 500);
+        //             }
+
+
+        //             if (cur_frm.doc.total_qty == 0) {
+
+        //                 if (value.name === 'Deposit') {
+        //                     window.is_deposit = true;
+        //                     return true;
+        //                 }
+
+        //                 if (value.custom_is_cp) {
+        //                     window.is_cp = true;
+        //                     return true;
+        //                 }
+        //             }
+
+        //             if (cur_frm.doc.total_qty === 1) {
+
+
+        //                 if (window.is_cp) {
+
+        //                     if (window.is_deposit) {
+        //                         return false;
+        //                     }
+
+        //                     if (value.custom_is_cp) {
+        //                         return true;
+        //                     } else {
+        //                         return false;
+        //                     }
+        //                 }
+
+        //                 if (window.is_deposit) {
+
+        //                     if (value.name != 'Deposit') {
+        //                         return false;
+        //                     }
+
+        //                     if (value.name === 'Deposit') {
+
+        //                         if (allow_change_deposit_rate && cur_frm.doc.total_qty === 1) {
+        //                             return true;
+        //                         } else {
+        //                             return false;
+        //                         }
+
+        //                     }
+        //                 }
+        //             }
+        //             return true;
+
+        //             // ==========================================================================================
+        //         })
+        //             .catch((e) => {
+        //                 console.error(e.message); // "Item alert raised, stopping further execution" or other errors
+        //             })
+
+
+        //         if (!_ && window.is_deposit) {
+        //             return this.raise_item_deposit_alert()
+        //         }
+
+        //         //console.log(_)
+
+        //         if (!_ && window.is_cp) {
+        //             return this.raise_item_cp_alert();
+        //         }
+
+
+        //         const from_selector = field === "qty" && value === "+1";
+        //         if (from_selector) value = flt(item_row.qty) + flt(value);
+
+        //         if (item_row_exists) {
+        //             if (field === "qty") value = flt(value);
+
+        //             if (["qty", "conversion_factor"].includes(field) && value > 0 && !this.allow_negative_stock) {
+        //                 const qty_needed =
+        //                     field === "qty" ? value * item_row.conversion_factor : item_row.qty * value;
+        //                 await this.check_stock_availability(item_row, qty_needed, this.frm.doc.set_warehouse);
+        //             }
+
+        //             if (this.is_current_item_being_edited(item_row) || from_selector) {
+        //                 await frappe.model.set_value(item_row.doctype, item_row.name, field, value);
+        //                 this.update_cart_html(item_row);
+        //             }
+        //         } else {
+        //             if (!this.frm.doc.customer) return this.raise_customer_selection_alert();
+
+        //             const { item_code, batch_no, serial_no, rate, uom, stock_uom } = item;
+
+        //             if (!item_code) return;
+
+        //             if (rate == undefined || rate == 0) {
+        //                 frappe.show_alert({
+        //                     message: __("Price is not set for the item."),
+        //                     indicator: "orange",
+        //                 });
+        //                 frappe.utils.play_sound("error");
+        //                 return;
+        //             }
+        //             const new_item = { item_code, batch_no, rate, uom, [field]: value, stock_uom };
+
+        //             if (serial_no) {
+        //                 await this.check_serial_no_availablilty(item_code, this.frm.doc.set_warehouse, serial_no);
+        //                 new_item["serial_no"] = serial_no;
+        //             }
+
+        //             new_item["use_serial_batch_fields"] = 1;
+        //             if (field === "serial_no") new_item["qty"] = value.split(`\n`).length || 0;
+
+        //             item_row = this.frm.add_child("items", new_item);
+
+        //             if (field === "qty" && value !== 0 && !this.allow_negative_stock) {
+        //                 const qty_needed = value * item_row.conversion_factor;
+        //                 await this.check_stock_availability(item_row, qty_needed, this.frm.doc.set_warehouse);
+        //             }
+
+        //             await this.trigger_new_item_events(item_row);
+
+        //             this.update_cart_html(item_row);
+
+        //             if (this.item_details.$component.is(":visible")) this.edit_item_details_of(item_row);
+
+        //             if (
+        //                 this.check_serial_batch_selection_needed(item_row) &&
+        //                 !this.item_details.$component.is(":visible")
+        //             )
+        //                 this.edit_item_details_of(item_row);
+        //         }
+
+
+        //     } catch (error) {
+        //         console.log(error);
+        //     } finally {
+        //         frappe.dom.unfreeze();
+        //         return item_row; // eslint-disable-line no-unsafe-finally
+        //     }
+
+        // }
 
         init_item_selector() {
             this.item_selector = new erpnext.PointOfSale.ItemSelector({
@@ -658,33 +786,16 @@ frappe.require('point-of-sale.bundle.js', function () {
             
         }
     }, 0);
-
-
-
 });
 
-function roundToNearestTenth(num) {
-    return Math.round(num * 10) / 10;
-  }
-
-
-
 register_realtime_events = () => {
-
     frappe.realtime.on('material_request', async (data) => {
-
-
-
-        console.log('material_request');
-
-
 
         x = await frappe.db.get_doc('User', frappe.session.user_email).then((result) => {
 
                 let selected_warehouse = result.default_warehouse ?? frappe.user_defaults['default_warehouse'];
 
                 if (data.to_warehouse === selected_warehouse) { frappe.utils.play_sound("custom-alert");
-
 
                     var audio = new Audio('/assets/cpherbalist/sounds/mixkit-unlock-game-notification-253.wav'); // replace with the actual sound file path
                     audio.loop = true; // Set loop to true for continuous sound
@@ -721,14 +832,11 @@ register_realtime_events = () => {
 
 }
 
-setTimeout(() => {
+// setTimeout(() => {
     
-    $(document).ready(() => {
-        register_realtime_events();
+//     $(document).ready(() => {
+//         register_realtime_events();
 
-    })
+//     })
 
-}, 0);
-
-
-
+// }, 0);

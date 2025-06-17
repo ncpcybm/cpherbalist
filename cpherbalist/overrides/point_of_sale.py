@@ -323,20 +323,30 @@ def create_opening_voucher(pos_profile, company, balance_details):
 
 
 @frappe.whitelist()
-def get_past_order_list(search_term, status, limit=20):
-	fields = ["name", "grand_total", "currency", "customer", "posting_time", "posting_date"]
+def get_past_order_list(search_term, status, pos_profile=None, limit=100):
+	fields = ["name", "grand_total", "currency", "customer", "posting_time", "posting_date", "pos_profile"]
 	invoice_list = []
 
+	common_filters = {"status": status}
+	if pos_profile and pos_profile != 'na':
+		common_filters["pos_profile"] = pos_profile
+
 	if search_term and status:
+		customer_filters = common_filters.copy()
+		customer_filters["customer"] = ["like", f"%{search_term}%"]
+
+		name_filters = common_filters.copy()
+		name_filters["name"] = ["like", f"%{search_term}%"]
+
 		invoices_by_customer = frappe.db.get_list(
 			"POS Invoice",
-			filters={"customer": ["like", f"%{search_term}%"], "status": status},
+			filters=customer_filters,
 			fields=fields,
 			page_length=limit,
 		)
 		invoices_by_name = frappe.db.get_list(
 			"POS Invoice",
-			filters={"name": ["like", f"%{search_term}%"], "status": status},
+			filters=name_filters,
 			fields=fields,
 			page_length=limit,
 		)
@@ -344,7 +354,7 @@ def get_past_order_list(search_term, status, limit=20):
 		invoice_list = invoices_by_customer + invoices_by_name
 	elif status:
 		invoice_list = frappe.db.get_list(
-			"POS Invoice", filters={"status": status}, fields=fields, page_length=limit
+			"POS Invoice", filters=common_filters, fields=fields, page_length=limit
 		)
 
 	return invoice_list

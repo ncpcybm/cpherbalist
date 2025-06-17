@@ -1,6 +1,6 @@
 const toMilliseconds = (hrs, min, sec) => (hrs * 60 * 60 + min * 60 + sec) * 1000;
 
-window.default_expiration = toMilliseconds(1, 30, 0)
+window.default_expiration = toMilliseconds(0, 30, 0)
 window.lock = false;
 window.fail_count = 0;
 window.is_dialog_open = 0;
@@ -19,39 +19,6 @@ function removeCustomStyle() {
         styleTag = null;  // Clear the reference
     }
 }
-
-function addCustomStyle() {
-    // Create a new <style> element
-    styleTag = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = `
-        .payment-container {
-            display: inline-table !important;
-        }
-
-        .point-of-sale-app > .payment-container > .fields-numpad-container > .number-pad {
-            flex: none;
-            display: inline;
-        }
-
-        .point-of-sale-app > .payment-container > .fields-numpad-container {
-        
-            height: auto !important;
-        
-        }
-
-        .point-of-sale-app > .payment-container > .fields-numpad-container > .fields-section .invoice-fields {
-        
-            overflow-y: unset !important;
-
-        
-        }
-    `;
-    
-    // Append the style tag to the head of the document
-    document.head.appendChild(style);
-}
-
 
 function observeElementVisibility(element, callback, options = {}) {
     const defaultOptions = {
@@ -132,12 +99,12 @@ clear_child_table = (frm, child_table_name, refresh = true) => {
 // ===================================================================
 
 window.dialog = new frappe.ui.Dialog({
-    title: 'Sales Profile',
+    title: 'Sales Profile User',
     fields: [{
         label: '👤 User',
         fieldname: 'user_link',
         fieldtype: 'Link',
-        options: 'User', // The link will pull from the 'User' doctype
+        options: 'User', 
         reqd: 1,
         get_query: () => {
             return {
@@ -145,86 +112,115 @@ window.dialog = new frappe.ui.Dialog({
             };
         }
     },
-    {
-        label: '🔑 PIN Code',
-        fieldname: 'password',
-        fieldtype: 'Password',
-        reqd: 1
-    }
+    // {
+    //     label: '🔑 PIN Code',
+    //     fieldname: 'password',
+    //     fieldtype: 'Password',
+    //     reqd: 1
+    // }
     ],
-    primary_action_label: 'Confirm',
+    primary_action_label: 'Set Seller Profile',
     primary_action: function () {
         var data = dialog.get_values();
+
+        console.log(data);
+
+
         if (data) {
 
-            console.log(`👤 Selected User: ${data.user_link}, 🔑 Password: ${data.password}`)
-
             frappe.call({
-                method: "cpherbalist.pos.validate_user_pin",
+                method: "cpherbalist.api.get_user_info",
                 args: {
-                    user_email: data.user_link,
-                    pin: data.password
+                    email: data.user_link
                 },
-                freeze: true,
-                callback: function (r) {
-                    localStorage.removeItem('seller_profile');
-
+                callback: function(r) {
                     if (r.message) {
-                        dialog.fields_dict.user_link.set_value('');
-                        dialog.fields_dict.password.set_value('');
-                        dialog.hide();
+
+
+                        localStorage.removeItem('seller_profile');
+                        localStorage.removeItem('seller_profile_name');
+
+
                         setItemWithCustomExpiry('seller_profile', data.user_link, window.default_expiration);
+                        setItemWithCustomExpiry('seller_profile_name', r.message.full_name, window.default_expiration);
+
                         render_seller_profile();
-
-
-                        frappe.call({
-                            method: "cpherbalist.api.log_seller_profile", 
-                            args: {
-                                s_user: data.user_link,
-                            },
-                            callback: function(r) {
-                                if (r.message) {
-                    
-                                }
-                            },
-                            error: function(err) {
-                                console.error(err);
-                            }
-                        });
-
-
-                    } else {
-
-
-                        frappe.msgprint({
-                            title: __('PIN is not valid'),
-                            indicator: 'red',
-                            message: __('Provided PIN is not valid.')
-
-                        });
-
-
-                        dialog.fields_dict.password.set_value('');
-                        window.fail_count++
-
-                        if (window.fail_count >= 3) {
-                            frappe.throw(__('Please contact the administrator.'))
-                            location.reload();
-                        }
+                        dialog.hide();
                     }
                 }
             });
 
-        }
+
+
+
+
+if (false) {
+                frappe.call({
+                    method: "cpherbalist.pos.validate_user_pin",
+                    args: {
+                        user_email: data.user_link,
+                        pin: data.password
+                    },
+                    freeze: true,
+                    callback: function (r) {
+                        localStorage.removeItem('seller_profile');
+    
+                        if (r.message) {
+                            dialog.fields_dict.user_link.set_value('');
+                            dialog.fields_dict.password.set_value('');
+                            dialog.hide();
+                            setItemWithCustomExpiry('seller_profile', data.user_link, window.default_expiration);
+                            render_seller_profile();
+    
+    
+                            frappe.call({
+                                method: "cpherbalist.api.log_seller_profile", 
+                                args: {
+                                    s_user: data.user_link,
+                                },
+                                callback: function(r) {
+                                    if (r.message) {
+                        
+                                    }
+                                },
+                                error: function(err) {
+                                    console.error(err);
+                                }
+                            });
+    
+    
+                        } else {
+    
+    
+                            frappe.msgprint({
+                                title: __('PIN is not valid'),
+                                indicator: 'red',
+                                message: __('Provided PIN is not valid.')
+    
+                            });
+    
+    
+                            dialog.fields_dict.password.set_value('');
+                            window.fail_count++
+    
+                            if (window.fail_count >= 3) {
+                                frappe.throw(__('Please contact the administrator.'))
+                                location.reload();
+                            }
+                        }
+                    }
+                });
+    
+            }
+}
     }
 });
 
 function request_pin() {
-    dialog.show();
-    render_seller_profile();
-
-
-
+    if (true) {
+            dialog.show();
+            render_seller_profile();
+    }
 }
 
 const observer = new MutationObserver((entries) => {
@@ -257,17 +253,25 @@ function render_pricing_rule() {
 
 
 function render_seller_profile() {
-    const value = getItemWithExpiry('seller_profile');
+    let value = undefined;
+
+    //value = getItemWithExpiry('seller_profile');
+    value = getItemWithExpiry('seller_profile_name');
 
     if (value) {
         if (!document.querySelector('.seller-profile')) {
 
             const outerSpan = document.createElement('span');
+
             outerSpan.classList.add('seller-profile', 'indicator-pill', 'no-indicator-dot', 'whitespace-nowrap', 'red');
             outerSpan.style.textTransform = "uppercase";
 
             const innerSpan = document.createElement('span');
-            innerSpan.textContent = value;
+
+            innerSpan.style.fontWeight = '700';
+
+
+            innerSpan.textContent = '🔄 ' + value;
 
             outerSpan.appendChild(innerSpan);
 
@@ -279,11 +283,6 @@ function render_seller_profile() {
                 request_pin()
 
             }, { once: false })
-
-
-
-
-
             // outerSpan.onclick = function(){ 
             //     request_pin()
             // };
@@ -291,8 +290,6 @@ function render_seller_profile() {
 
             document.querySelector('.seller-profile').remove()
             render_seller_profile()
-
-
         }
     }
 }
@@ -300,12 +297,9 @@ function render_seller_profile() {
 // ===================================================================
 
 render_action_btn = (frm, button_id, button_name, callback, group = undefined) => {
-
-
     if (!cur_frm.fields_dict[button_id]) {
         cur_frm.add_custom_button(__(button_name), callback , group);  
     }
-
 
 }
 
@@ -319,79 +313,88 @@ render_pos_action_btn = (frm) => {
     // })
 
 
-    cur_pos.page.add_button("➕ Create Coupon", ()=> { 
+        cur_pos.page.add_button("📱 Calculator", ()=> { 
         try {
-            window.open(
-                '/app/coupon-code/new-coupon-code-ddd',
-                '_blank' // <- This is what makes it open in a new window.
-            );
+            window.open('Calculator:///'); /* shows a confirm dialog to run the app*/
         } catch (error) { }
     }, { btn_class: "" })
 
 
+    cur_pos.page.add_button("🧾 Recent Orders", ()=> { 
+        try {
+            cur_pos.toggle_recent_order()
 
+            
+        } catch (error) { }
+    }, { btn_class: "" })
 
-    cur_pos.page.add_button("🆕 New POS Order", ()=> { 
+    cur_pos.page.add_button("➕ Create Coupon", ()=> { 
+        try {
+            window.open(
+                '/app/coupon-code/new-coupon-code-ddd',
+                '_blank'
+            );
+        } catch (error) { }
+    }, { btn_class: "" })
+
+    cur_pos.page.add_button("➕ New Order", ()=> { 
         try {
             window.location.href = '/app/point-of-sale' 
         } catch (error) { }
     }, { btn_class: "" })
 
-    cur_pos.page.add_button("🧮 Round Amount", ()=> { 
-        try {
-            function roundDownToNearestTenth(value) {
-                const rounded = Math.floor(value * 10) / 10;
-                const difference = value - rounded;
-                const percentageDifference = (difference / value) * 100;
+
+
+    // cur_pos.page.add_button("🧮cc Round Amount", ()=> { 
+
+    //     try {
+    //         function roundDownToNearestTenth(value) {
+    //             const rounded = Math.floor(value * 10) / 10;
+    //             const difference = value - rounded;
+    //             const percentageDifference = (difference / value) * 100;
             
-                return {
-                    original: value.toFixed(2),
-                    rounded: rounded.toFixed(2),
-                    difference: difference.toFixed(2),
-                    percentage: percentageDifference.toFixed(2)
-                };
-            }
+    //             return {
+    //                 original: value.toFixed(2),
+    //                 rounded: rounded.toFixed(2),
+    //                 difference: difference.toFixed(2),
+    //                 percentage: percentageDifference.toFixed(2)
+    //             };
+    //         }
 
-            let input = cur_frm.doc.grand_total;
+    //         let input = cur_frm.doc.grand_total;
 
-            const result = roundDownToNearestTenth(input);
+    //         const result = roundDownToNearestTenth(input);
             
-            console.log(`Original   : ${result.original}`);
-            console.log(`Rounded    : ${result.rounded}`);
-            console.log(`Difference : ${result.difference}`);
-            console.log(`Percentage : ${result.percentage}`);
+    //         console.log(`Original   : ${result.original}`);
+    //         console.log(`Rounded    : ${result.rounded}`);
+    //         console.log(`Difference : ${result.difference}`);
+    //         console.log(`Percentage : ${result.percentage}`);
+    //         cur_frm.set_value('additional_discount_percentage', parseFloat(result.percentage));
 
-            debugger
-
-
-            cur_frm.set_value('additional_discount_percentage', parseFloat(result.percentage));
-
-        } catch (error) { }
-    }, { btn_class: "" })
+    //     } catch (error) { }
+    // }, { btn_class: "" })
 
 
 
-    const value = getItemWithExpiry('seller_profile');
-    let buttonValue = '👤 Select Seller Profile'; 
-
-    if (value) {
-        buttonValue = '🔄 Switch Seller Profile';
-    } else {
-        buttonValue = '👤 Select Seller Profile';
-    }
-
-    cur_pos.page.add_button(buttonValue, ()=> { 
-        try {
-            request_pin();
-
-
-
-
-
-
-
-        } catch (error) { }
-    })
+if (false) {
+        const value = getItemWithExpiry('seller_profile');
+        let buttonValue = '👤 Select Seller Profile'; 
+    
+        if (value) {
+            buttonValue = '🔄 Switch Seller Profile';
+        } else {
+    
+            let allowProceedWithoutSellerProfile = false; 
+            buttonValue = '👤 Select Seller Profile';
+            
+        }
+    
+        cur_pos.page.add_button(buttonValue, ()=> { 
+            try {
+                request_pin();
+            } catch (error) { }
+        })
+}
 
 
 
@@ -411,6 +414,12 @@ render_pos_action_btn = (frm) => {
 frappe.ui.form.on('Stock Entry', {
     onload: function(frm) {
         if (cur_frm.is_new()) {
+
+
+            cur_frm.set_value('stock_entry_type', 'Material Receipt');
+
+
+
             let default_source_warehouse = frappe.db.get_single_value('CP Settings', 'default_source_warehouse')
                 .then(value => {
                     console.log('default_source_warehouse:', value);

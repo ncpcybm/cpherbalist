@@ -59,6 +59,10 @@
 
 frappe.provide("erpnext.PointOfSale");
 
+
+
+
+
 function generateRandomString(length) {
     const charset = 'abcdefghijklmnopqrstuvwxyz';
     let result = '';
@@ -188,7 +192,7 @@ frappe.require('point-of-sale.bundle.js', function () {
                 render_pos_action_btn()
                 render_seller_profile()
                 removeCustomStyle()
-              }, 0);
+            }, 0);
         }
 
         force_close() {
@@ -237,7 +241,10 @@ frappe.require('point-of-sale.bundle.js', function () {
         }
 
         create_opening_voucher() {
+
             const me = this;
+            let openingEntryExist = false;
+
             const table_fields = [
                 {
                     fieldname: "mode_of_payment",
@@ -264,6 +271,7 @@ frappe.require('point-of-sale.bundle.js', function () {
                     },
                 },
             ];
+
             const fetch_pos_payment_methods = () => {
                 const pos_profile = dialog.fields_dict.pos_profile.get_value();
                 if (!pos_profile) return;
@@ -276,7 +284,6 @@ frappe.require('point-of-sale.bundle.js', function () {
                     dialog.fields_dict.balance_details.grid.refresh();
                 });
             };
-
 
             const dialog = new frappe.ui.Dialog({
                 title: __("🟢 Create POS Opening Entry"),
@@ -297,15 +304,15 @@ frappe.require('point-of-sale.bundle.js', function () {
                         options: "POS Profile",
                         fieldname: "pos_profile",
                         reqd: 1,
-                        get_query: () => pos_profile_query(),
+                        //get_query: () => pos_profile_query(),
                         onchange: () => fetch_pos_payment_methods(),
-                        read_only: 1
+                        read_only: 0
                     },
                     {
                         fieldname: "balance_details",
                         fieldtype: "Table",
                         label: __("Opening Balance Details"),
-                        cannot_add_rows: false,
+                        cannot_add_rows: true,
                         in_place_edit: true,
                         reqd: 1,
                         data: [],
@@ -325,6 +332,8 @@ frappe.require('point-of-sale.bundle.js', function () {
                     balance_details = balance_details.filter((d) => d.mode_of_payment);
 
                     const method = "erpnext.selling.page.point_of_sale.point_of_sale.create_opening_voucher";
+                    
+                    
                     const res = await frappe.call({
                         method,
                         args: { pos_profile, company, balance_details },
@@ -339,8 +348,11 @@ frappe.require('point-of-sale.bundle.js', function () {
 
             frappe.call({
                 method: "cpherbalist.pos_automated_actions.get_user_pos_profile",
-                args: { "user": frappe.session.user },  // Pass any arguments if required (empty in this case)
+                args: { "user": frappe.session.user },  
                 callback: function (response) {
+
+
+
 
                     if (dialog && response.message) {
                         dialog.fields_dict['pos_profile'].set_value(response.message);
@@ -355,13 +367,16 @@ frappe.require('point-of-sale.bundle.js', function () {
                 }
             });
 
+
             dialog.show();
+
             const pos_profile_query = () => {
                 return {
                     query: "erpnext.accounts.doctype.pos_profile.pos_profile.pos_profile_query",
                     filters: { company: dialog.fields_dict.company.get_value() },
                 };
             };
+
         }
 
         get_item = async (code) => {

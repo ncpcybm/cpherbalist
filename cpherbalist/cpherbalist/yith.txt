@@ -1,0 +1,35 @@
+SELECT DISTINCT meta_value, post_title AS 'POS Profile' 
+FROM 11o3A1Ug_postmeta 
+INNER JOIN 11o3A1Ug_posts ON 11o3A1Ug_postmeta.meta_value = 11o3A1Ug_posts.ID;
+WHERE meta_key LIKE '%%' AND meta_key = '_yith_pos_store' AND meta_value <> '';
+
+
+
+
+SELECT * FROM 11o3A1Ug_postmeta WHERE post_id = 29903;
+
+
+
+
+
+SELECT p.ID as post_id, p.post_title, pm.meta_key, pm.meta_value
+FROM 11o3A1Ug_posts p
+INNER JOIN 11o3A1Ug_postmeta pm ON p.ID = pm.post_id
+WHERE p.ID = 29903;
+
+
+
+
+
+SELECT p.ID, p.post_title, pm.meta_key, pm.meta_value
+FROM 11o3A1Ug_posts p
+INNER JOIN 11o3A1Ug_postmeta pm ON p.ID = pm.post_id
+WHERE p.post_type = 'post' AND p.ID = 123;
+
+
+
+SELECT pm.meta_key, pm.meta_value
+FROM 11o3A1Ug_postmeta pm
+INNER JOIN 11o3A1Ug_posts p ON p.ID = pm.post_id
+WHERE p.ID = 123
+  AND p.post_type = 'shop_order';

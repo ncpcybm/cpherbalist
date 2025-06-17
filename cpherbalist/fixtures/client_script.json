@@ -1,0 +1,35 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "POS Invoice",
+  "enabled": 0,
+  "modified": "2025-05-06 15:19:03.157047",
+  "module": "Cpherbalist",
+  "name": "EXCLUDED_ITEM_FROM_PRICING_RULE",
+  "script": "frappe.ui.form.on('POS Invoice', {\n    validate: function(frm) {\n        const EXCLUDED_ITEMS = ['ZL'];  // List of excluded items\n        const TARGET_POS_PROFILE = 'Ithomis';  // POS Profile to target\n        const TARGET_WAREHOUSE = 'Central - Ithomis - CP';  // Warehouse to target\n        const DISCOUNT_PERCENTAGE = 0;  // Discount percentage to apply\n\n        // Check if the POS Profile is the correct one\n        if (frm.doc.pos_profile !== TARGET_POS_PROFILE) return;\n\n        // Loop through items and apply discount logic\n        frm.doc.items.forEach(item => {\n            if (\n                !EXCLUDED_ITEMS.includes(item.item_code) &&  // If not excluded item\n                item.warehouse === TARGET_WAREHOUSE  // If item is from the target warehouse\n            ) {\n                item.discount_percentage = DISCOUNT_PERCENTAGE;  // Apply discount\n            } else {\n                item.discount_percentage = 0;  // No discount if excluded or wrong warehouse\n            }\n        });\n\n        // Refresh field to update changes\n        frm.refresh_field('items');\n    }\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "POS Invoice",
+  "enabled": 0,
+  "modified": "2025-05-09 14:26:09.772070",
+  "module": "Cpherbalist",
+  "name": "ROUND",
+  "script": "frappe.ui.form.on('POS Invoice', {\n    before_save: function(frm) {\n        var total_amount = frm.doc.grand_total;\n\n        // Custom rounding logic\n        var rounded_amount = Math.floor(total_amount * 20) / 20;  // Round to nearest 0.05\n        \n        // Update the total with the rounded value\n        frm.set_value('grand_total', rounded_amount);\n        frm.set_value('rounded_total', rounded_amount);\n    }\n});\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "POS Invoice",
+  "enabled": 1,
+  "modified": "2025-05-11 16:24:14.118134",
+  "module": "Cpherbalist",
+  "name": "POS Invoice Seller Profile",
+  "script": "frappe.ui.form.on('POS Invoice', {\r\n    onload: function(frm) {\r\n        \r\n        if (frm.is_new()) {\r\n\r\n\r\n            frm.set_value('write_off_outstanding_amount_automatically', 1);\r\n            \r\n            const item = JSON.parse(localStorage.getItem('seller_profile'));\r\n            \r\n            seller_profile = frappe.session.user;\r\n\r\n            if (item.value != undefined || item.value != '') {\r\n                seller_profile = item.value;\r\n            }\r\n            \r\n            frm.set_value('custom_seller_account', seller_profile);\r\n        }\r\n    }\r\n});",
+  "view": "Form"
+ }
+]

@@ -1,0 +1,42 @@
+
+body[data-route^="point-of-sale"] .page-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+}
+
+body[data-route^="point-of-sale"] .pos-container {
+    width: 100% !important;
+}
+
+body[data-route^="point-of-sale"] .page-body,
+body[data-route^="point-of-sale"] .layout-main-section-wrapper,
+body[data-route^="point-of-sale"] .layout-main-section {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+div[id^="page-point-of-sale"] div.container.page-body {
+
+    margin: unset !important;
+}
+
+
+div[id^="page-point-of-sale"] div.container.page-body div.page-wrapper{
+
+    width: 100vw;
+}
+
+
+.number-pad {
+    padding-left: 5em;
+    padding-right: 5em;
+    padding-bottom: 0px;
+    padding-top: 5em;
+}
+
+.point-of-sale-app>.payment-container>.fields-numpad-container>.number-pad {
+    flex: 1;
+    display: unset !important;
+
+}

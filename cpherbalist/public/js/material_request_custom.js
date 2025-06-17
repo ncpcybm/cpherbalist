@@ -75,13 +75,6 @@ frappe.ui.form.on('Material Request', {
     },
     onload_post_render: async function (frm) {
         //console.log(":: onload_post_render ::" + (frm.is_new() === 1 && (getCookie('set_warehouse') != null)));
-
-
-
-
-
-
-
         return; 
 
         console.log('🔃 ' + decodeURI(getCookie('set_from_warehouse')))
@@ -118,7 +111,7 @@ frappe.ui.form.on('Material Request', {
             }).catch((err) => {
 
 
-                frm.set_value('set_warehouse', "Central - Ithomis - CP")
+                frm.set_value('set_warehouse', "Stores - CP")
 
                 frm.set_df_property('set_warehouse', 'read_only', 0);
                 frm.set_value('set_from_warehouse', '')

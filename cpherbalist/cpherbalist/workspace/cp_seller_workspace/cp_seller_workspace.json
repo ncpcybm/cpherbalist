@@ -1,0 +1,44 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"cr1IMEYArP\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">CP Seller Workspace</span>\",\"col\":12}},{\"id\":\"q9wEdvWhf1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"POS\",\"col\":3}}]",
+ "creation": "2025-06-03 16:54:14.666363",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "color-rank",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "CP Seller Workspace",
+ "links": [],
+ "modified": "2025-06-04 11:07:53.241738",
+ "modified_by": "Administrator",
+ "module": "Cpherbalist",
+ "name": "CP Seller Workspace",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "POS User"
+  },
+  {
+   "role": "Seller Profile"
+  }
+ ],
+ "sequence_id": 4.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "POS",
+   "type": "URL",
+   "url": "/app/point-of-sale"
+  }
+ ],
+ "title": "CP Seller Workspace"
+}

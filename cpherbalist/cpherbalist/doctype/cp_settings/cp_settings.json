@@ -18,7 +18,16 @@
   "autosubmit_workorder",
   "column_break_rxxj",
   "misc_section",
-  "default_voucher_product"
+  "default_voucher_product",
+  "column_break_xlvk",
+  "limit_recent_orders_to_pos_level",
+  "coupon_code_sync_section",
+  "wp_endpoint_url",
+  "wp_consumer_key",
+  "wp_consumer_secret",
+  "pos_invoice_and_survey_tab",
+  "enable_pos_invoice_questioner_survey",
+  "pos_invoice_questionersurvey"
  ],
  "fields": [
   {
@@ -103,13 +112,60 @@
    "fieldtype": "Link",
    "label": "Default Voucher Product",
    "options": "Item"
+  },
+  {
+   "fieldname": "coupon_code_sync_section",
+   "fieldtype": "Section Break",
+   "label": "Coupon Code Sync"
+  },
+  {
+   "fieldname": "wp_endpoint_url",
+   "fieldtype": "Data",
+   "label": "Wordpress Endpoint URL"
+  },
+  {
+   "fieldname": "wp_consumer_key",
+   "fieldtype": "Data",
+   "label": "Consumer Key"
+  },
+  {
+   "fieldname": "wp_consumer_secret",
+   "fieldtype": "Data",
+   "label": "Consumer Secret"
+  },
+  {
+   "fieldname": "pos_invoice_and_survey_tab",
+   "fieldtype": "Tab Break",
+   "label": "POS Invoice and Survey"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_pos_invoice_questioner_survey",
+   "fieldtype": "Check",
+   "label": "Enable POS Invoice Questioner/Survey "
+  },
+  {
+   "fieldname": "pos_invoice_questionersurvey",
+   "fieldtype": "Table",
+   "label": "POS Invoice Questioner/Survey",
+   "options": "POS Invoice Questioner Survey Item"
+  },
+  {
+   "fieldname": "column_break_xlvk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "limit_recent_orders_to_pos_level",
+   "fieldtype": "Check",
+   "label": "Limit Recent Orders to POS Level"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-05 15:48:19.876286",
+ "modified": "2025-06-16 16:16:56.245416",
  "modified_by": "Administrator",
  "module": "Cpherbalist",
  "name": "CP Settings",

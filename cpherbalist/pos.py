@@ -9,18 +9,12 @@ from frappe.utils import today, getdate, nowdate
 from datetime import datetime
 
 import erpnext
+
 from erpnext.accounts.doctype.pricing_rule.utils import validate_coupon_code
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import get_pos_reserved_qty
-
 from frappe.utils.data import sha256_hash
-
 from frappe.utils.password import check_password, get_decrypted_password
-
-
 from cpherbalist.frappe_helpers import get_settings, get_specific_setting, get_current_pos
-
-
-
 
 '''
 =========================================
@@ -34,11 +28,7 @@ def get_invoices_for_template(parent_invoice):
     return frappe.render_template('templates/pages/pos_invoice/render_child_invoices_template.html', {
         'child_invoices': child_invoices
     })
-    
-    
-    
-    
-    
+
 '''
 =========================================
 '''
@@ -81,18 +71,43 @@ def get_child_invoices(filters):
 '''
 =========================================
 '''
+# TODO: Update itno live enviroment
+
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_seller_profile_users(doctype, txt, searchfield, start, page_len, filters, as_dict=False):
     try:
-        doctype="User"
-        # python_object = json.loads(filters)
-        
-        return frappe.db.sql("""SELECT uhr.parent, u.first_name, u.last_name FROM `tabUser` u INNER JOIN `tabHas Role` uhr ON u.email = uhr.parent WHERE uhr.role = 'Seller Profile' AND u.enabled = 1;"""); 
+        # page_len = 100
+        # return frappe.db.sql("""
+        #     SELECT 
+        #         CONCAT(u.first_name, ' ', u.last_name) AS display_name,
+        #         u.email,
+        #         uhr.parent
+        #     FROM `tabUser` u
+        #     INNER JOIN `tabHas Role` uhr ON u.email = uhr.parent
+        #     WHERE uhr.role = 'Seller Profile'
+        #         AND u.enabled = 1
+        #         AND (u.first_name LIKE %(txt)s OR u.last_name LIKE %(txt)s OR u.email LIKE %(txt)s)
+        #     LIMIT %(start)s, %(page_len)s
+        # """, {
+        #     "txt": f"%{txt}%",
+        #     "start": start,
+        #     "page_len": page_len
+        # })
+                
+        # doctype="User"
+        return frappe.db.sql("""
+                             SELECT 
+                             u.email,
+                             CONCAT(u.first_name, ' ', u.last_name)
+                             FROM `tabUser` u 
+                             INNER JOIN `tabHas Role` uhr ON u.email = uhr.parent 
+                             WHERE uhr.role = 'Seller Profile' 
+                                AND (u.first_name LIKE %(txt)s OR u.last_name LIKE %(txt)s OR u.email LIKE %(txt)s) 
+                                AND u.enabled = 1;""", { "txt": f"%{txt}%"} ); 
         
     except Exception as e:
-        # Log the error with detailed information
-        frappe.log_error(frappe.get_traceback(), f"Error while creating sales invoice and payment: {str(e)}")
+        frappe.log_error(frappe.get_traceback(), f"Error while fetching users: {str(e)}")
         return []
 
 @frappe.whitelist()
@@ -162,8 +177,6 @@ def validate_user_pin(user_email, pin):
 def create_stock_entry_against_parent_invoice_reserved_items(filters):
     python_object = json.loads(filters)
     
-    
-    
     results = frappe.db.sql(f"""SELECT pdi.item, pdi.item_name, pdi.qty, pdi.total_amount FROM `tabPOS Invoice` pi INNER JOIN `tabPOS Deposit Item List` pdi ON pi.name = pdi.parent WHERE pi.name = %(parent_invoice)s AND pi.docstatus = 1;""",
                             parent_invoice=python_object.get("parent_invoice"),
                             as_dict=True); 
@@ -204,7 +217,6 @@ def get_parent_invoice_reserved_items(filters):
                                 parent_invoice=python_object.get("parent_invoice")
                                 ),
                             as_dict=True); 
-       
     return results
 
 '''
@@ -248,10 +260,9 @@ def t_create_payment_entry(filters) :
     try:
         
         python_object = json.loads(filters)
- 
+
         sales_invoice_name = python_object.get("parent_invoice")
 
-        
         sales_invoice = frappe.get_doc('Sales Invoice', sales_invoice_name)
         
         if not sales_invoice:
@@ -446,7 +457,6 @@ def t_create_settlement_sales_invoice(filters) :
 @frappe.whitelist()
 def get_deposit_invoice_per_profile(filters): 
     
-       
     invoices = []
     python_object = json.loads(filters)
     results = frappe.db.sql(f"""SELECT `tabPOS Invoice`.`name`,`tabPOS Invoice`.`creation`,`tabPOS Invoice`.`idx`,`tabPOS Invoice`.`title`,`tabPOS Invoice`.`custom_item_to_reserved`,`tabPOS Invoice`.`pos_profile`,`tabPOS Invoice`.`total`,`tabPOS Invoice`.`net_total`,`tabPOS Invoice`.`total_taxes_and_charges`,`tabPOS Invoice`.`base_discount_amount`,`tabPOS Invoice`.`discount_amount`,`tabPOS Invoice`.`grand_total`,`tabPOS Invoice`.`rounding_adjustment`,`tabPOS Invoice`.`rounded_total`,`tabPOS Invoice`.`total_advance`,`tabPOS Invoice`.`outstanding_amount`,`tabPOS Invoice`.`paid_amount`,`tabPOS Invoice`.`change_amount`,`tabPOS Invoice`.`write_off_amount`,`tabPOS Invoice`.`is_discounted`,`tabPOS Invoice`.`status`,`tabPOS Invoice`.`customer`,`tabPOS Invoice`.`customer_name`,`tabPOS Invoice`.`base_grand_total`,`tabPOS Invoice`.`due_date`,`tabPOS Invoice`.`company`,`tabPOS Invoice`.`currency`,`tabPOS Invoice`.`is_return`,`tabPOS Invoice`.`modified` FROM `tabPOS Invoice` WHERE `pos_profile` = %(pos_profile)s AND `custom_is_deposit` = 1 ORDER BY `tabPOS Invoice`.`modified` desc""",
@@ -578,18 +588,23 @@ def apply_coupon_code(applied_code, applied_amount, transaction_id):
 
 
 @frappe.whitelist()
-def get_coupon(coupon_code):
-    
-    coupon = frappe.get_all(
-        'Coupon Code',
-        filters={'coupon_code': coupon_code},
-        fields=['*']
-    )
-    
-    coupon = coupon[0]
+def get_coupon(coupon_code, b_by_name = False):
 
-    if coupon:
-        return coupon
+    if b_by_name :
+        coupon_list = frappe.get_all(
+            'Coupon Code',
+            filters={'coupon_name': coupon_code},
+            fields=['*']
+        )
+    else: 
+        coupon_list = frappe.get_all(
+            'Coupon Code',
+            filters={'coupon_code': coupon_code},
+            fields=['*']
+        )
+        
+    if coupon_list:
+        return coupon_list[0]
     else:
         return None  # Return None if no record is found 
 
@@ -651,6 +666,11 @@ def is_valid(coupon_code):
     
     return is_valid
             
+@frappe.whitelist()
+def get_coupon_name_by_code(code):
+    coupon_name = frappe.get_all('Coupon Code',filters={'name': code},fields=['*']
+)
+    return coupon_name
 
 @frappe.whitelist()
 def update_coupon_balance(coupon_code, balance):

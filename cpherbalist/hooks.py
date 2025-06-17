@@ -24,7 +24,7 @@ app_license = "mit"
 add_to_apps_screen = [
     {
         "name": "cpherbalist",
-        "logo": " http://91.107.236.18/files/cpherbalist-logo-black.png",
+        "logo": " /assets/cpherbalist/img/cpherbalist-logo-black.png",
         "title": "POS",
         "route": "app/point-of-sale",
         "has_permission": "erpnext.check_app_permission",
@@ -44,7 +44,7 @@ website_context = {
 # include js, css files in header of desk.html
 app_include_css = "/assets/cpherbalist/css/cpherbalist.css"
 
-# app_include_js = "/assets/cpherbalist/dist/js/cpherbalist.bundle.js"
+# app_include_js = "cpherbalist.bundle.js"
 
 app_include_js = ["/assets/cpherbalist/js/cpherbalist.js",
                   "/assets/cpherbalist/js/custom_item.js",
@@ -54,7 +54,8 @@ app_include_js = ["/assets/cpherbalist/js/cpherbalist.js",
                   "/assets/cpherbalist/js/coupon_extensions.js",
                   "/assets/cpherbalist/js/manufacturing_extensions.js", 
                   "/assets/cpherbalist/js/customer_extensions.js", 
-                  "/assets/cpherbalist/js/customer_list.js"
+                  "/assets/cpherbalist/js/customer_list.js",
+                  "/assets/cpherbalist/js/clear_pos_on_logout.js",
                 ]
 
 
@@ -88,8 +89,6 @@ page_js = {"point-of-sale" : [
 # include js in doctype views
 
 # after_migrate = ["cpherbalist.stock_entry_extensions.enqueue_stock_transfer"]
-
-
 
 doctype_js = {
 	"Material Request" : "public/js/material_request_custom.js",
@@ -194,7 +193,7 @@ doctype_js = {
 # }
 
 override_doctype_class = {
-    "POSInvoice": "cpherbalist.overrides.doctype.pos_invoice.POSInvoice",
+    # "POS Invoice": "cpherbalist.overrides.pos_invoice.CustomPOSInvoice",
     "Item": "cpherbalist.overrides.doctypes.item.ItemExtensions"
 }
 
@@ -210,23 +209,29 @@ override_doctype_class = {
 # 	}
 # }
 
-
 doc_events = {
     "POS Invoice": {
-        "before_submit": "cpherbalist.api.handle_pos_invoice_submit",
+        "on_submit" :"cpherbalist.overrides.pos_invoice.custom_on_submit",
+        # "before_insert": "cpherbalist.pos_invoice_hooks.custom_autoname",
+        # "on_submit": "cpherbalist.pos_invoice_hooks.rename_on_paid",
+
+        # "before_submit": "cpherbalist.api.handle_pos_invoice_submit",
         # "validate": "your_app.api.validate_pos_invoice"
     },
-    "Work Order": {
-        "after_insert": "cpherbalist.api.submit_wo",
-        "on_submit": "cpherbalist.api.on_wo_submitted",
-        # "valid1ate": "your_app.api.validate_pos_invoice"
-    },
+    # "Work Order": {
+    #     # "after_insert": "cpherbalist.api.submit_wo",
+    #     # "on_submit": "cpherbalist.api.on_wo_submitted",
+    #     # "valid1ate": "your_app.api.validate_pos_invoice"
+    # },
     "Material Request": {
         # "after_insert": "cpherbalist.api.submit_matrial_request",
         # "valid1ate": "your_app.api.validate_pos_invoice"
     },
     "Coupon Code": {
         "after_insert": "cpherbalist.api.wc_coupon_sync"
+    },
+    "Customer": {
+        "after_insert": "cpherbalist.overrides.customer.after_insert_customer"
     }
 }
 
@@ -234,7 +239,13 @@ doc_events = {
 
 # Scheduled Tasks
 # ---------------
-
+scheduler_events = {
+    "cron": {
+        "0 2 * * *": [
+            "cpherbalist.pos_writeoff.write_off_unpaid_pos_invoices"
+        ]
+    }
+}
 # scheduler_events = {
 # 	"all": [
 # 		"cpherbalist.tasks.all"
@@ -264,6 +275,14 @@ doc_events = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "cpherbalist.event.get_events"
 # }
+
+
+override_whitelisted_methods = {
+    'cpherbalsit.api.qr_code.get_qr_base64': 'cpherbalsit.qr_code.get_qr_base64',
+    'cpherbalsit.api.qr_code.get_qr_jpg' : 'cpherbalsit.qr_code.get_qr_jpg'
+}
+
+
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -336,3 +355,11 @@ sounds = [
 
 
 # fixtures = ["Users PIN", "Letter Head", "Report"]
+
+
+fixtures = [
+    {"dt": "Client Script"},
+    {"dt": "Server Script"},
+    {"dt": "Workspace"},
+
+]
